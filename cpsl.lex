@@ -1,5 +1,15 @@
 %{
 #include <string.h>
+#include "symbols.h"
+
+
+union 
+{
+    int int_val;
+    char char_val;
+    char* str_val;
+} yylval;
+
 %}
 letter      [a-zA-Z]
 digit       [0-9]
@@ -68,7 +78,7 @@ WRITE               {return(WRITESYM);}
 write               {return(WRITESYM);}
 
   /* Identifiers */
-{letter}({lord})*   {yylval.name_ptr = strdup(yytext); return(IDENTSYM);}
+{letter}({lord})*   {yylval.str_val = strdup(yytext); return(IDENTSYM);}
 
   /* TODO - Predefined identifiers??? */
 
