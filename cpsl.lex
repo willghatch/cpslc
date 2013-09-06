@@ -138,7 +138,7 @@ int intnum ()
 /* convert character string into an integer */
 {
     char *atol_end;
-    return (int) atol(yytext, &atol_end, 0);
+    return (int) strtol(yytext, &atol_end, 0);
 };  /* intnum */
 
 char getEscapedChar(char in)
