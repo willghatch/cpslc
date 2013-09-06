@@ -110,10 +110,13 @@ write               {return(WRITESYM);}
 \'([\040-\133\135-\177]|\\[\040-\177])\'    {return(CHARACTERSYM);} /* TODO - read the character */
 
   /* String Constants */
+\"([\040-\177])*\"  {return(STRINGSYM);} /* TODO - read the string */
 
   /* Comments */
+\$([^\n])*\n        {}
 
   /* White Space */
+([\r\n\t\040])+     {}
 
   /* Illegal (catch-all) */
 .                   {error("Illegal character");}
