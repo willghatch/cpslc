@@ -1,7 +1,5 @@
 %{
 #include <string.h>
-#include "utility.h"
-#include "pascal.tab.h"
 %}
 letter      [a-zA-Z]
 digit       [0-9]
@@ -107,10 +105,10 @@ write               {return(WRITESYM);}
 0x[0-9a-fA-F]+      {yylval.int_val = intnum(); return(NUMERICALSYM);}
 
   /* Character Constants */
-\'([\040-\133\135-\177]|\\[\040-\177])\'    {return(CHARACTERSYM);} /* TODO - read the character */
+\'([\040-\133\135-\177]|\\[\040-\177])\'    {yylval.char_val = strUnescape(yytext)[0]; return(CHARACTERSYM);} 
 
   /* String Constants */
-\"([\040-\177])*\"  {return(STRINGSYM);} /* TODO - read the string */
+\"([\040-\177])*\"  {yylval.str_val = strUnescape(yytext); return(STRINGSYM);} 
 
   /* Comments */
 \$([^\n])*\n        {}
@@ -125,5 +123,52 @@ write               {return(WRITESYM);}
 int intnum ()
 /* convert character string into an integer */
 {
-   /* remember to deal with octal, decimal, and hexadecimal (or make it actually 3 functions) */
+    char *atol_end;
+    return (int) atol(yytext, &atol_end, 0);
 };  /* intnum */
+
+char getEscapedChar(char in)
+/* Returns eg. LF for n, CR for r, TAB for t... */
+{
+    switch (in) {
+        case 'n': return '\n';
+        case 'r': return '\r';
+        case 'b': return '\b';
+        case 't': return '\t';
+        case 'f': return '\f';
+        default: return in;
+    }
+}
+
+char* strUnescape (char *input)
+/* Like strdup, only it strips the first and last character (quotes) and converts
+   escape sequences to literal characters. */
+{
+    int textlen = strlen(yytext);
+    int unescapedlen = 0;
+    char *dupstr = malloc(sizeof(char) * (textlen+1));
+    int escaped = 0;
+    for(int i = 1 /*start after opening "*/; i < textlen -1 /*ignore closing quote*/; ++i)
+    {
+        if(escaped)
+        {
+            dupstr[unescapedlen++] = getEscapedChar(yytext[i]);
+            escaped = 0;
+        }
+        else
+        {
+            if(yytext[i] == '\\') 
+            {
+                escaped = 1;
+            }
+            else
+            {
+                dupstr[unescapedlen++] = yytext[i];
+            }
+        }
+    }
+    dupstr[unescapedlen++] = 0;
+    return dupstr;
+}
+/* TODO - when should I free the strings I get with strUnescape or strdup??? */
+
