@@ -85,7 +85,7 @@ write               {return(WRITESYM);}
   /* Operators/Delimiters */
 "+"                 {return(PLUSSYM);}
 "-"                 {return(MINUSSYM);}
-"*"                 {return(STARSYMM);}
+"*"                 {return(STARSYM);}
 "/"                 {return(SLASHSYM);}
 "&"                 {return(AMPERSANDSYM);}
 "|"                 {return(PIPESYM);}
@@ -115,7 +115,11 @@ write               {return(WRITESYM);}
 0x[0-9a-fA-F]+      {yylval.int_val = intnum(); return(NUMERICALSYM);}
 
   /* Character Constants */
-\'([\040-\133\135-\177]|\\[\040-\177])\'    {yylval.char_val = strUnescape(yytext)[0]; return(CHARACTERSYM);} 
+\'([\040-\133\135-\177]|\\[\040-\177])\'    {
+    char *dupstr = strUnescape(yytext);
+    yylval.char_val = dupstr[0];
+    free(dupstr);
+    return(CHARACTERSYM);} 
 
   /* String Constants */
 \"([\040-\177])*\"  {yylval.str_val = strUnescape(yytext); return(STRINGSYM);} 
