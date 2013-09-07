@@ -14,6 +14,8 @@ union
 char *strUnescape(char *input);
 int intnum();
 int yywrap() {return 1;}
+void error(char *msg);
+extern int yylex();
 
 %}
 letter      [a-zA-Z]
