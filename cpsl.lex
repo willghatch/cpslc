@@ -2,15 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include "symbols.h"
+#include "yylval.h"
 
 #define LEXERRORNUM 58
 
-union 
-{
-    int int_val;
-    char char_val;
-    char* str_val;
-} yylval;
+
+union yylvalUnion yylval;
 char *strUnescape(char *input);
 int intnum();
 int yywrap() {return 1;}

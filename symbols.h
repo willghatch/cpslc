@@ -1,3 +1,6 @@
+#ifndef SYMBOLS_H
+#define SYMBOLS_H
+
 #define ERRORSYM 237
 #define AMPERSANDSYM 1
 #define ARRAYSYM 2
@@ -56,3 +59,5 @@
 #define VARSYM 55
 #define WHILESYM 56
 #define WRITESYM 57
+
+#endif
