@@ -1,7 +1,9 @@
 %{
+#include <stdlib.h>
 #include <string.h>
 #include "symbols.h"
 
+#define LEXERRORNUM 58
 
 union 
 {
@@ -9,6 +11,9 @@ union
     char char_val;
     char* str_val;
 } yylval;
+char *strUnescape(char *input);
+int intnum();
+int yywrap() {return 1;}
 
 %}
 letter      [a-zA-Z]
@@ -131,7 +136,7 @@ write               {return(WRITESYM);}
 ([\r\n\t\040])+     {}
 
   /* Illegal (catch-all) */
-.                   {error("Illegal character");}
+.                   {error("Illegal character"); return ERRORSYM;}
 
 %%
 int intnum ()
@@ -154,30 +159,31 @@ char getEscapedChar(char in)
     }
 }
 
-char* strUnescape (char *input)
+char *strUnescape (char *input)
 /* Like strdup, only it strips the first and last character (quotes) and converts
    escape sequences to literal characters. */
 {
-    int textlen = strlen(yytext);
+    int textlen = strlen(input);
     int unescapedlen = 0;
-    char *dupstr = malloc(sizeof(char) * (textlen+1));
+    char *dupstr;
+    dupstr = malloc(sizeof(char) * (textlen+1));
     int escaped = 0;
     for(int i = 1 /*start after opening "*/; i < textlen -1 /*ignore closing quote*/; ++i)
     {
         if(escaped)
         {
-            dupstr[unescapedlen++] = getEscapedChar(yytext[i]);
+            dupstr[unescapedlen++] = getEscapedChar(input[i]);
             escaped = 0;
         }
         else
         {
-            if(yytext[i] == '\\') 
+            if(input[i] == '\\') 
             {
                 escaped = 1;
             }
             else
             {
-                dupstr[unescapedlen++] = yytext[i];
+                dupstr[unescapedlen++] = input[i];
             }
         }
     }
@@ -185,4 +191,10 @@ char* strUnescape (char *input)
     return dupstr;
 }
 /* TODO - when should I free the strings I get with strUnescape or strdup??? */
+
+void error(char *msg)
+{
+    printf(msg);
+    exit(LEXERRORNUM);
+}
 

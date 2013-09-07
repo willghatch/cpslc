@@ -5,4 +5,4 @@ lex.yy.c: cpsl.lex
 	flex cpsl.lex
 
 cpslc: main.c lex.yy.c
-	gcc -o cpslc main.c
+	gcc --std=c99 -o cpslc main.c

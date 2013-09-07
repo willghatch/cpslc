@@ -1,3 +1,4 @@
+#define ERRORSYM 237
 #define AMPERSANDSYM 1
 #define ARRAYSYM 2
 #define ASSIGNSYM 3
