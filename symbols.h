@@ -1,7 +1,10 @@
 #ifndef SYMBOLS_H
 #define SYMBOLS_H
 
-#define ERRORSYM 237
+/* Just to have a weird error number */
+#define ERRORSYM 99237
+
+#define FLEX_EOF_SYM 0
 #define AMPERSANDSYM 1
 #define ARRAYSYM 2
 #define ASSIGNSYM 3
