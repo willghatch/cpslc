@@ -3,4 +3,11 @@ By William Hatch
 
 An exciting class project for CS5300 at Utah State University.
 
+So right now it's a lexical analyzer... it prints int values for the symbols found, and their yylval
+value if they're an identifier or constant (int, string, or char).  It takes the name of a file or
+it reads from stdin.
+
+The symbol values are all in symbols.h.
+
+Umm... to build, run make.  Have fun.
 

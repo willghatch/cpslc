@@ -31,7 +31,7 @@ int main(int argc, char **argv)
         printf("Symbol number found: %d\n",lexval);
         switch(lexval) 
         {
-            case IDENTSYM: printf("symbol: %s\n", yylval.str_val); break;
+            case IDENTSYM: printf("identifier: %s\n", yylval.str_val); break;
             case NUMERICALSYM: printf("number: %i\n", yylval.int_val); break;
             case CHARACTERSYM: printf("character: %c\n", yylval.char_val); break;
             case STRINGSYM: printf("string: %s\n", yylval.str_val); break;

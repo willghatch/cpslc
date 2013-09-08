@@ -12,7 +12,7 @@ union yylvalUnion yylval;
 char *strUnescape(char *input);
 int intnum();
 int yywrap() {return 1;}
-void error(char *msg);
+void lex_error(char *msg);
 extern int yylex();
 
 %}
@@ -136,7 +136,7 @@ write               {return(WRITESYM);}
 ([\r\n\t\040])+     {}
 
   /* Illegal (catch-all) */
-.                   {error("Illegal character"); return ERRORSYM;}
+.                   {lex_error("Illegal character"); return ERRORSYM;}
 
 %%
 int intnum ()
@@ -192,7 +192,7 @@ char *strUnescape (char *input)
 }
 /* TODO - when should I free the strings I get with strUnescape or strdup??? */
 
-void error(char *msg)
+void lex_error(char *msg)
 {
     printf(msg);
     exit(LEXERRORNUM);
