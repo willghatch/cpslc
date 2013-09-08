@@ -4,6 +4,7 @@
 #include "symbols.h"
 #include "yylval.h"
 
+/* TODO - find a system for error numbers */
 #define LEXERRORNUM 58
 
 
