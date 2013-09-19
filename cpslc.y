@@ -14,8 +14,16 @@ int yylex(void);
 
 /* Tokens go here */
 
+/* TODO - I think I have the precedence backwards */
+%right UNARYMINUS
+%left STARSYM SLASHSYM PERCENTSYM
+%left PLUSSYM MINUSSYM
+%nonassoc EQUALSYM NEQUALSYM LTSYM LTESYM GTSYM GTESYM
+%right TILDESYM
+%left AMPERSANDSYM
+%left PIPESYM
+
 %token            FLEX_EOF_SYM 
-%token            AMPERSANDSYM 
 %token            ARRAYSYM 
 %token            ASSIGNSYM 
 %token            BEGINSYM 
@@ -29,27 +37,17 @@ int yylex(void);
 %token            ELSEIFSYM 
 %token            ELSESYM 
 %token            ENDSYM 
-%token            EQUALSYM 
 %token            FORSYM 
 %token            FORWARDSYM 
 %token            FUNCTIONSYM 
-%token            GTESYM 
-%token            GTSYM 
 %token            IDENTSYM 
 %token            IFSYM 
 %token            LBRACKETSYM 
 %token            LPARENSYM 
-%token            LTESYM 
-%token            LTSYM 
-%token            MINUSSYM 
-%token            NEQUALSYM 
 %token <int_val>  NUMERICALSYM 
 %token            OFSYM 
 %token            ORDSYM 
-%token            PERCENTSYM 
 %token            PERIODSYM 
-%token            PIPESYM 
-%token            PLUSSYM 
 %token            PREDSYM 
 %token            PROCEDURESYM 
 %token            RBRACKETSYM 
@@ -59,13 +57,10 @@ int yylex(void);
 %token            RETURNSYM 
 %token            RPARENSYM 
 %token            SEMICOLONSYM 
-%token            SLASHSYM 
-%token            STARSYM 
 %token            STOPSYM 
 %token <str_val>  STRINGSYM 
 %token            SUCCSYM 
 %token            THENSYM 
-%token            TILDESYM 
 %token            TOSYM 
 %token            TYPESYM 
 %token            UNTILSYM 
@@ -73,9 +68,10 @@ int yylex(void);
 %token            WHILESYM 
 %token            WRITESYM 
 
+
 %%
 program:
-    constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDecls block
+    constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDeclStar block
     ;
 
 /* Constant Declarations */
@@ -92,6 +88,11 @@ constantDecl:
     ;
 
 /* Procedure and Function Declarations */
+procOrFuncDeclStar:
+    procedureDecl procOrFuncDeclStar
+    | functionDecl procOrFuncDeclStar
+    | empty
+    ;
 procedureDecl:
     PROCEDURESYM IDENTSYM LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM SEMICOLONSYM
     | PROCEDURESYM IDENTSYM LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body SEMICOLONSYM
@@ -106,6 +107,10 @@ formalParameters:
     ;
 formalParameterExt:
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt
+    | empty
+    ;
+varMaybe:
+    VARSYM
     | empty
     ;
 body:
@@ -173,11 +178,131 @@ varDeclExt:
 
 /* Statements */
 statementSequence:
-    statement colonStatementStar
+    statement semicolonStatementStar
     ;
-colonStatementStar:
-    COLONSYM statement colonStatementStar
+semicolonStatementStar:
+    SEMICOLONSYM statement semicolonStatementStar
     | empty
     ;
-/* TODO - finish this!  I'm on statements */
+statement:
+    assignment
+    | whileStatement
+    | repeatStatement
+    | forStatement
+    | stopStatement
+    | returnStatement
+    | readStatement
+    | writeStatement
+    | procedureCall
+    | nullStatement
+    ;
+assignment:
+    lValue ASSIGNSYM expression
+    ;
+ifStatement:
+    IFSYM expression THENSYM statementSequence elseifStar elseMaybe ENDSYM
+    ;
+elseifStar:
+    ELSEIFSYM expression THENSYM statementSequence elseifStar
+    | empty
+    ;
+elseMaybe:
+    ELSESYM statementSequence
+    | empty
+    ;
+whileStatement:
+    WHILESYM expression DOSYM statementSequence ENDSYM
+    ;
+repeatStatement:
+    REPEATSYM statementSequence UNTILSYM expression
+    ;
+forStatement:
+    FORSYM IDENTSYM ASSIGNSYM expression TOSYM expression DOSYM statementSequence ENDSYM
+    ;
+stopStatement:
+    STOPSYM
+    ;
+returnStatement:
+    RETURNSYM expressionMaybe
+    ;
+expressionMaybe:
+    expression
+    | empty
+    ;
+readStatement:
+    READSYM LPARENSYM lValue commaLValueStar RPARENSYM
+    ;
+commaLValueStar:
+    COMMASYM lValue commaLValueStar
+    | empty
+    ;
+writeStatement:
+    WRITESYM LPARENSYM expression commaExpressionStar RPARENSYM
+    ;
+commaExpressionStar:
+    COMMASYM expression commaExpressionStar
+    | empty
+    ;
+procedureCall:
+    IDENTSYM LPARENSYM maybeExpressionsWithCommas RPARENSYM
+    ;
+maybeExpressionsWithCommas:
+    expression commaExpressionStar
+    | empty
+    ;
+nullStatement:
+    empty
+    ;
+
+/* Expressions */
+expression:
+    unaryOp expression
+    | expression binaryOp expression
+    | LPARENSYM expression RPARENSYM
+    | procedureCall
+    | CHRSYM LPARENSYM expression RPARENSYM
+    | ORDSYM LPARENSYM expression RPARENSYM
+    | PREDSYM LPARENSYM expression RPARENSYM
+    | SUCCSYM LPARENSYM expression RPARENSYM
+    | lValue
+    | constExpression
+    ;
+unaryOp:
+    TILDESYM
+    | MINUSSYM %prec UNARYMINUS
+    ;
+binaryOp:
+    PIPESYM 
+    | AMPERSANDSYM 
+    | EQUALSYM 
+    | NEQUALSYM 
+    | LTESYM 
+    | GTESYM 
+    | LTSYM 
+    | GTSYM 
+    | PLUSSYM 
+    | MINUSSYM 
+    | STARSYM 
+    | SLASHSYM 
+    | PERCENTSYM 
+    ;
+lValue:
+    IDENTSYM
+    | IDENTSYM PERIODSYM IDENTSYM
+    | IDENTSYM LBRACKETSYM expression RBRACKETSYM
+    ;
+constExpression:
+    unaryOp constExpression
+    | constExpression binaryOp constExpression
+    | LPARENSYM constExpression RPARENSYM
+    | NUMERICALSYM
+    | CHARACTERSYM
+    | STRINGSYM
+    | IDENTSYM
+    ;
+
+empty:
+    %empty
+    ;
+
 
