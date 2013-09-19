@@ -1,12 +1,12 @@
 # Mmm... I'll generalize this and remove duplication later... for now it's hard coded.
 
-all: cpslc
+all: cpslc lextest
 
 lextest: lextest_main.o lex.yy.o
 	gcc --std=c99 -o lextest lextest_main.o lex.yy.o
 
 clean:
-	rm cpslc *.o lex.yy.c cpslc.tab.c parser.h
+	rm cpslc *.o lex.yy.c cpslc.tab.c parser.h lextest 
 
 lex.yy.c: cpslc.lex
 	flex cpslc.lex
