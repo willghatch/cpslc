@@ -1,21 +1,20 @@
-%{
+%top{
 #include <stdlib.h>
 #include <string.h>
-#include "symbols.h"
-#include "yylval.h"
+#include "parser.h"
 
 /* TODO - find a system for error numbers */
 #define LEXERRORNUM 58
 
 
-union yylvalUnion yylval;
+union YYSTYPE yylval;
 char *strUnescape(char *input);
+int yywrap();
 int intnum();
-int yywrap() {return 1;}
 void lex_error(char *msg);
 extern int yylex();
 
-%}
+}
 letter      [a-zA-Z]
 digit       [0-9]
 lord        [a-zA-Z0-9]
@@ -130,10 +129,13 @@ write               {return(WRITESYM);}
 \"([\040-\177])*\"  {yylval.str_val = strUnescape(yytext); return(STRINGSYM);} 
 
   /* Comments */
-\$([^\n])*\n        {}
+\$([^\n])*\n        {++yylineno;}
 
   /* White Space */
-([\r\n\t\040])+     {}
+([\r\t\040])+     {}
+
+  /* increment newline */
+\n                  {++yylineno;}
 
   /* Illegal (catch-all) */
 .                   {lex_error("Illegal character"); return ERRORSYM;}
@@ -196,5 +198,11 @@ void lex_error(char *msg)
 {
     printf(msg);
     exit(LEXERRORNUM);
+}
+
+
+int yywrap() 
+{
+    return 1;
 }
 

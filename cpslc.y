@@ -1,8 +1,9 @@
 /* cpslc.y */
 
 %{
-#include "foobar"
-int yyerror(char *msg);
+#include<stdio.h>
+#include<stdlib.h>
+int yyerror(const char *msg);
 int yylex(void);
 %}
 
@@ -11,6 +12,9 @@ int yylex(void);
     char char_val;
     char *str_val;
 }
+/* give verbose errors */
+%error-verbose
+%defines "parser.h"
 
 /* Tokens go here */
 
@@ -24,6 +28,8 @@ int yylex(void);
 %left PIPESYM
 
 %token            FLEX_EOF_SYM 
+%token            ERRORSYM
+
 %token            ARRAYSYM 
 %token            ASSIGNSYM 
 %token            BEGINSYM 
@@ -84,7 +90,7 @@ constantDeclPlus:
     | constantDecl
     ;
 constantDecl:
-    CONSTSYM IDENTSYM EQUALSYM constExpression SEMICOLONSYM constantDecl
+    CONSTSYM IDENTSYM EQUALSYM constExpression SEMICOLONSYM 
     ;
 
 /* Procedure and Function Declarations */
@@ -103,7 +109,7 @@ functionDecl:
     ;
 formalParameters:
     empty
-    | varMaybe identList COLONSYM formalParameterExt
+    | varMaybe identList COLONSYM type formalParameterExt
     ;
 formalParameterExt:
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt
@@ -144,10 +150,11 @@ simpleType:
     IDENTSYM
     ;
 recordType:
-    RECORDSYM identListsOfType ENDSYM
+    RECORDSYM identListsOfTypeStar ENDSYM
     ;
-identListsOfType:
-    identList COLONSYM type SEMICOLONSYM
+identListsOfTypeStar:
+    identList COLONSYM type SEMICOLONSYM identListsOfTypeStar
+    | empty
     ;
 arrayType:
     ARRAYSYM LBRACKETSYM constExpression COLONSYM constExpression RBRACKETSYM OFSYM type
@@ -186,6 +193,7 @@ semicolonStatementStar:
     ;
 statement:
     assignment
+    | ifStatement
     | whileStatement
     | repeatStatement
     | forStatement
@@ -304,5 +312,18 @@ constExpression:
 empty:
     %empty
     ;
+
+
+%%
+
+/* Code */
+int yyerror(const char *msg) 
+{
+    extern int yylineno; /* from flex */
+    extern char *yytext; /* from flex */
+
+    printf("ERROR: %s -- at symbol \"%s\" on line %i.\n", msg, yytext, yylineno);
+    exit(1);
+}
 
 
