@@ -5,8 +5,8 @@ all: cpslc
 clean:
 	rm cpslc *.o lex.yy.c
 
-lex.yy.c: cpsl.lex
-	flex cpsl.lex
+lex.yy.c: cpslc.lex
+	flex cpslc.lex
 
 lex.yy.o: lex.yy.c
 	gcc --std=c99 lex.yy.c -c
