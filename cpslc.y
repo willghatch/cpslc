@@ -77,17 +77,21 @@ int yylex(void);
 program:
     constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDecls block
     ;
+
+/* Constant Declarations */
 constantDeclMaybe:
-    constantDecls
+    constantDeclPlus
     | empty
     ;
-constantDecls:
-    constantDecl constantDecls
+constantDeclPlus:
+    constantDecl constantDeclPlus
     | constantDecl
     ;
 constantDecl:
     CONSTSYM IDENTSYM EQUALSYM constExpression SEMICOLONSYM constantDecl
     ;
+
+/* Procedure and Function Declarations */
 procedureDecl:
     PROCEDURESYM IDENTSYM LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM SEMICOLONSYM
     | PROCEDURESYM IDENTSYM LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body SEMICOLONSYM
@@ -104,4 +108,76 @@ formalParameterExt:
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt
     | empty
     ;
+body:
+    constantDeclMaybe typeDeclMaybe varDeclMaybe block
+    ;
+block:
+    BEGINSYM statementSequence ENDSYM
+    ;
+
+/* Type Declarations */
+typeDeclMaybe:
+    typeDecl
+    | empty
+    ;
+typeDecl:
+    TYPESYM identEqTypePlus
+    ;
+identEqTypePlus:
+    identEqType identEqTypePlus
+    | identEqType
+    ;
+identEqType:
+    IDENTSYM EQUALSYM type SEMICOLONSYM
+    ;
+type:
+    simpleType
+    | recordType
+    | arrayType
+    ;
+simpleType:
+    IDENTSYM
+    ;
+recordType:
+    RECORDSYM identListsOfType ENDSYM
+    ;
+identListsOfType:
+    identList COLONSYM type SEMICOLONSYM
+    ;
+arrayType:
+    ARRAYSYM LBRACKETSYM constExpression COLONSYM constExpression RBRACKETSYM OFSYM type
+    ;
+identList:
+    IDENTSYM identExt
+    ;
+identExt:
+    COMMASYM IDENTSYM identExt
+    | empty
+    ;
+
+/* Variable Declarations */
+varDeclMaybe:
+    varDecl
+    | empty
+    ;
+varDecl:
+    VARSYM varDeclExtPlus
+    ;
+varDeclExtPlus:
+    varDeclExt varDeclExtPlus
+    | varDeclExt
+    ;
+varDeclExt:
+    identList COLONSYM type SEMICOLONSYM
+    ;
+
+/* Statements */
+statementSequence:
+    statement colonStatementStar
+    ;
+colonStatementStar:
+    COLONSYM statement colonStatementStar
+    | empty
+    ;
+/* TODO - finish this!  I'm on statements */
 
