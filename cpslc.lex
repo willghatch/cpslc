@@ -18,6 +18,7 @@ extern int yylex();
 letter      [a-zA-Z]
 digit       [0-9]
 lord        [a-zA-Z0-9]
+let_dig_und [a-zA-Z0-9_]
 %%
   /* Keywords */
 ARRAY               {return(ARRAYSYM);}
@@ -82,7 +83,7 @@ WRITE               {return(WRITESYM);}
 write               {return(WRITESYM);}
 
   /* Identifiers */
-{letter}({lord})*   {yylval.str_val = strdup(yytext); return(IDENTSYM);}
+{letter}({let_dig_und})*   {yylval.str_val = strdup(yytext); return(IDENTSYM);}
 
   /* TODO - Predefined identifiers??? */
 
@@ -196,7 +197,7 @@ char *strUnescape (char *input)
 
 void lex_error(char *msg)
 {
-    printf(msg);
+    printf("Error: %s -- on line %i.", msg, yylineno);
     exit(LEXERRORNUM);
 }
 
