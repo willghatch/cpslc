@@ -18,14 +18,6 @@ int yylex(void);
 
 /* Tokens go here */
 
-/* TODO - I think I have the precedence backwards */
-%right UNARYMINUS
-%left STARSYM SLASHSYM PERCENTSYM
-%left PLUSSYM MINUSSYM
-%nonassoc EQUALSYM NEQUALSYM LTSYM LTESYM GTSYM GTESYM
-%right TILDESYM
-%left AMPERSANDSYM
-%left PIPESYM
 
 %token            FLEX_EOF_SYM 
 %token            ERRORSYM
@@ -74,6 +66,14 @@ int yylex(void);
 %token            WHILESYM 
 %token            WRITESYM 
 
+%nonassoc EMPTY /* to give lowest precedence to empty rules */
+%left PIPESYM
+%left AMPERSANDSYM
+%right TILDESYM
+%nonassoc EQUALSYM NEQUALSYM LTSYM LTESYM GTSYM GTESYM
+%left PLUSSYM MINUSSYM
+%left STARSYM SLASHSYM PERCENTSYM
+%right UNARYMINUS
 
 %%
 program:
@@ -90,7 +90,7 @@ constantDeclPlus:
     | constantDecl
     ;
 constantDecl:
-    CONSTSYM IDENTSYM EQUALSYM constExpression SEMICOLONSYM 
+    CONSTSYM IDENTSYM EQUALSYM expression SEMICOLONSYM 
     ;
 
 /* Procedure and Function Declarations */
@@ -157,7 +157,7 @@ identListsOfTypeStar:
     | empty
     ;
 arrayType:
-    ARRAYSYM LBRACKETSYM constExpression COLONSYM constExpression RBRACKETSYM OFSYM type
+    ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type
     ;
 identList:
     IDENTSYM identExt
@@ -273,7 +273,10 @@ expression:
     | PREDSYM LPARENSYM expression RPARENSYM
     | SUCCSYM LPARENSYM expression RPARENSYM
     | lValue
-    | constExpression
+    | NUMERICALSYM
+    | CHARACTERSYM
+    | STRINGSYM
+    | IDENTSYM
     ;
 unaryOp:
     TILDESYM
@@ -302,18 +305,10 @@ dotIdentOrExpStar:
     | LBRACKETSYM expression RBRACKETSYM dotIdentOrExpStar
     | empty
     ;
-constExpression:
-    unaryOp constExpression
-    | constExpression binaryOp constExpression
-    | LPARENSYM constExpression RPARENSYM
-    | NUMERICALSYM
-    | CHARACTERSYM
-    | STRINGSYM
-    | IDENTSYM
-    ;
 
 empty:
     /* empty */
+    %prec EMPTY
     ;
 
 
