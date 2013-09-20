@@ -4,6 +4,7 @@
 extern union yylvalUnion yylval;
 extern FILE *yyin;
 int yylex();
+void yyparse();
 
 int main(int argc, char **argv)
 {
