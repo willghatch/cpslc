@@ -26,6 +26,8 @@ int main(int argc, char **argv)
  */   
     yyparse();
 
+    printf("File parsed without error.\n");
+
     return 0;
 }
 

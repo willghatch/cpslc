@@ -295,9 +295,12 @@ binaryOp:
     | PERCENTSYM 
     ;
 lValue:
-    IDENTSYM
-    | IDENTSYM PERIODSYM IDENTSYM
-    | IDENTSYM LBRACKETSYM expression RBRACKETSYM
+    IDENTSYM dotIdentOrExpStar
+    ;
+dotIdentOrExpStar:
+    PERIODSYM IDENTSYM dotIdentOrExpStar
+    | LBRACKETSYM expression RBRACKETSYM dotIdentOrExpStar
+    | empty
     ;
 constExpression:
     unaryOp constExpression
@@ -310,7 +313,7 @@ constExpression:
     ;
 
 empty:
-    %empty
+    /* empty */
     ;
 
 
