@@ -1,7 +1,7 @@
 # Mmm... I'll generalize this and remove duplication later... for now it's hard coded.
 
 CC=gcc
-CFLAGS=--std=c99 -c
+CFLAGS=--std=gnu99 -c
 
 all: cpslc lextest
 
