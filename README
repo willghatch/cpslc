@@ -3,11 +3,16 @@ By William Hatch
 
 An exciting class project for CS5300 at Utah State University.
 
-So right now it's a lexical analyzer... it prints int values for the symbols found, and their yylval
+The executable "cpslc" is the compiler... which currently just tells whether or not it parses successfully.
+It reads from the file specified in the first command line parameter, or stdin.
+It currently has shift/reduce errors on two rules, but I want them to shift.  Later
+maybe I'll iron those out.
+
+
+The executable "lextest" is just a lexical analyzer.  It prints int values for the symbols found, and their yylval
 value if they're an identifier or constant (int, string, or char).  It takes the name of a file or
 it reads from stdin.
 
-The symbol values are all in symbols.h.
 
 Umm... to build, run make.  Have fun.
 
