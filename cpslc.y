@@ -101,7 +101,7 @@ subConstantDeclPlus:
     | subConstantDecl
     ;
 subConstantDecl:
-    IDENTSYM EQUALSYM expression SEMICOLONSYM
+    identifier EQUALSYM expression SEMICOLONSYM
     ;
 
 /* Procedure and Function Declarations */
@@ -111,12 +111,12 @@ procOrFuncDeclStar:
     | /* empty */ %prec EMPTY
     ;
 procedureDecl:
-    PROCEDURESYM IDENTSYM LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM SEMICOLONSYM
-    | PROCEDURESYM IDENTSYM LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body SEMICOLONSYM
+    PROCEDURESYM identifier LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM SEMICOLONSYM
+    | PROCEDURESYM identifier LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body SEMICOLONSYM
     ;
 functionDecl:
-    FUNCTIONSYM IDENTSYM LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM FORWARDSYM SEMICOLONSYM
-    | FUNCTIONSYM IDENTSYM LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM body SEMICOLONSYM
+    FUNCTIONSYM identifier LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM FORWARDSYM SEMICOLONSYM
+    | FUNCTIONSYM identifier LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM body SEMICOLONSYM
     ;
 formalParameters:
     varMaybe identList COLONSYM type formalParameterExt
@@ -150,7 +150,7 @@ identEqTypePlus:
     | identEqType
     ;
 identEqType:
-    IDENTSYM EQUALSYM type SEMICOLONSYM
+    identifier EQUALSYM type SEMICOLONSYM
     ;
 type:
     simpleType
@@ -158,7 +158,7 @@ type:
     | arrayType
     ;
 simpleType:
-    IDENTSYM
+    identifier
     ;
 recordType:
     RECORDSYM identListsOfTypeStar ENDSYM
@@ -171,10 +171,10 @@ arrayType:
     ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type
     ;
 identList:
-    IDENTSYM identExt
+    identifier identExt
     ;
 identExt:
-    COMMASYM IDENTSYM identExt
+    COMMASYM identifier identExt
     | /* empty */ %prec EMPTY
     ;
 
@@ -236,7 +236,7 @@ repeatStatement:
     REPEATSYM statementSequence UNTILSYM expression
     ;
 forStatement:
-    FORSYM IDENTSYM ASSIGNSYM expression toOrDownto expression DOSYM statementSequence ENDSYM
+    FORSYM identifier ASSIGNSYM expression toOrDownto expression DOSYM statementSequence ENDSYM
     ;
 toOrDownto:
     TOSYM
@@ -267,7 +267,7 @@ commaExpressionStar:
     | /* empty */ %prec EMPTY
     ;
 procedureCall:
-    IDENTSYM LPARENSYM maybeExpressionsWithCommas RPARENSYM
+    identifier LPARENSYM maybeExpressionsWithCommas RPARENSYM
     ;
 maybeExpressionsWithCommas:
     expression commaExpressionStar
@@ -290,7 +290,7 @@ expression:
     | lValue
     | NUMERICALSYM
     | CHARACTERSYM
-    | STRINGSYM
+    | STRINGSYM                                     {free(yylval.str_val);}
     ;
 unaryOp:
     TILDESYM
@@ -312,12 +312,15 @@ binaryOp:
     | PERCENTSYM 
     ;
 lValue:
-    IDENTSYM dotIdentOrExpStar
+    identifier dotIdentOrExpStar
     ;
 dotIdentOrExpStar:
-    PERIODSYM IDENTSYM dotIdentOrExpStar
+    PERIODSYM identifier dotIdentOrExpStar
     | LBRACKETSYM expression RBRACKETSYM dotIdentOrExpStar
     | /* empty */ %prec EMPTY
+    ;
+identifier:
+    IDENTSYM                        {free(yylval.str_val);}
     ;
 
 

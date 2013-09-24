@@ -194,7 +194,13 @@ char *strUnescape (char *input)
     dupstr[unescapedlen++] = 0;
     return dupstr;
 }
-/* TODO - when should I free the strings I get with strUnescape or strdup??? */
+/*  TODO - when should I free the strings I get with strUnescape or strdup??? 
+    Note: There are no memory leaks -- the kernel cleans it up. (While that's facicious
+    in this case, that's actually the way I feel for non-daemon, non-interactive programs
+    generally.  And my philosophy is that that's where all the work should usually
+    be done anyway.)
+    But for now I clean them up when the parser hits them.
+*/
 
 void lex_error(char *msg)
 {
