@@ -45,7 +45,6 @@ int yylex(void);
 %token <int_val>  NUMERICALSYM 
 %token            OFSYM 
 %token            ORDSYM 
-%token            PERIODSYM 
 %token            PREDSYM 
 %token            PROCEDURESYM 
 %token            RBRACKETSYM 
@@ -74,30 +73,42 @@ int yylex(void);
 %left PLUSSYM MINUSSYM
 %left STARSYM SLASHSYM PERCENTSYM
 %right UNARYMINUS
+%left PERIODSYM
 
 %%
 program:
-    constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDeclStar block
+    constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDeclStar block endPeriod
+    ;
+endPeriod:
+    PERIODSYM
+    | /*empty */
     ;
 
 /* Constant Declarations */
 constantDeclMaybe:
     constantDeclPlus
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 constantDeclPlus:
     constantDecl constantDeclPlus
     | constantDecl
     ;
 constantDecl:
-    CONSTSYM IDENTSYM EQUALSYM expression SEMICOLONSYM 
+    CONSTSYM subConstantDeclPlus
+    ;
+subConstantDeclPlus:
+    subConstantDecl subConstantDeclPlus
+    | subConstantDecl
+    ;
+subConstantDecl:
+    IDENTSYM EQUALSYM expression SEMICOLONSYM
     ;
 
 /* Procedure and Function Declarations */
 procOrFuncDeclStar:
     procedureDecl procOrFuncDeclStar
     | functionDecl procOrFuncDeclStar
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 procedureDecl:
     PROCEDURESYM IDENTSYM LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM SEMICOLONSYM
@@ -108,16 +119,16 @@ functionDecl:
     | FUNCTIONSYM IDENTSYM LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM body SEMICOLONSYM
     ;
 formalParameters:
-    empty
-    | varMaybe identList COLONSYM type formalParameterExt
+    varMaybe identList COLONSYM type formalParameterExt
+    | /* empty */ %prec EMPTY
     ;
 formalParameterExt:
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 varMaybe:
     VARSYM
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 body:
     constantDeclMaybe typeDeclMaybe varDeclMaybe block
@@ -129,7 +140,7 @@ block:
 /* Type Declarations */
 typeDeclMaybe:
     typeDecl
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 typeDecl:
     TYPESYM identEqTypePlus
@@ -154,7 +165,7 @@ recordType:
     ;
 identListsOfTypeStar:
     identList COLONSYM type SEMICOLONSYM identListsOfTypeStar
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 arrayType:
     ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type
@@ -164,13 +175,13 @@ identList:
     ;
 identExt:
     COMMASYM IDENTSYM identExt
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 
 /* Variable Declarations */
 varDeclMaybe:
     varDecl
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 varDecl:
     VARSYM varDeclExtPlus
@@ -189,7 +200,7 @@ statementSequence:
     ;
 semicolonStatementStar:
     SEMICOLONSYM statement semicolonStatementStar
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 statement:
     assignment
@@ -212,11 +223,11 @@ ifStatement:
     ;
 elseifStar:
     ELSEIFSYM expression THENSYM statementSequence elseifStar
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 elseMaybe:
     ELSESYM statementSequence
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 whileStatement:
     WHILESYM expression DOSYM statementSequence ENDSYM
@@ -225,7 +236,11 @@ repeatStatement:
     REPEATSYM statementSequence UNTILSYM expression
     ;
 forStatement:
-    FORSYM IDENTSYM ASSIGNSYM expression TOSYM expression DOSYM statementSequence ENDSYM
+    FORSYM IDENTSYM ASSIGNSYM expression toOrDownto expression DOSYM statementSequence ENDSYM
+    ;
+toOrDownto:
+    TOSYM
+    | DOWNTOSYM
     ;
 stopStatement:
     STOPSYM
@@ -235,31 +250,31 @@ returnStatement:
     ;
 expressionMaybe:
     expression
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 readStatement:
     READSYM LPARENSYM lValue commaLValueStar RPARENSYM
     ;
 commaLValueStar:
     COMMASYM lValue commaLValueStar
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 writeStatement:
     WRITESYM LPARENSYM expression commaExpressionStar RPARENSYM
     ;
 commaExpressionStar:
     COMMASYM expression commaExpressionStar
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 procedureCall:
     IDENTSYM LPARENSYM maybeExpressionsWithCommas RPARENSYM
     ;
 maybeExpressionsWithCommas:
     expression commaExpressionStar
-    | empty
+    | /* empty */ %prec EMPTY
     ;
 nullStatement:
-    empty
+    /* empty */ %prec EMPTY
     ;
 
 /* Expressions */
@@ -276,7 +291,6 @@ expression:
     | NUMERICALSYM
     | CHARACTERSYM
     | STRINGSYM
-    | IDENTSYM
     ;
 unaryOp:
     TILDESYM
@@ -303,12 +317,7 @@ lValue:
 dotIdentOrExpStar:
     PERIODSYM IDENTSYM dotIdentOrExpStar
     | LBRACKETSYM expression RBRACKETSYM dotIdentOrExpStar
-    | empty
-    ;
-
-empty:
-    /* empty */
-    %prec EMPTY
+    | /* empty */ %prec EMPTY
     ;
 
 
