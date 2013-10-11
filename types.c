@@ -129,8 +129,10 @@ struct id_info
 	TYPE *id_type;
 	ID *id_left;
 	ID *id_right;
+	// id_left and id_right is for a tree of ID's for the symbol table...
 	ID_KIND id_kind;
 	ID *id_next;
+	// id_next is for a linked list of ID's for a record type...
 	int id_value;
  }; /* id_info */
 
@@ -193,6 +195,7 @@ void freeIdTree(ID* tree) {
     freeIdTree(tree->id_left);
     freeIdTree(tree->id_right);
     free(tree);
+    // TODO - make sure this frees records and arrays properly.
 }
 
 void printTypeInfo(TYPE* type) {
