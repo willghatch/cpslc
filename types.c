@@ -100,19 +100,14 @@ char* getIdKindName(ID_KIND kind) {
     switch(kind) {
         case Constant:
             return "Constant";
-            break;
         case Type:
             return "Type";
-            break;
         case Variable:
             return "Variable";
-            break;
         case Procedure:
             return "Procedure";
-            break;
         case Function:
             return "Function";
-            break;
         default:
             return "Unknown Kind";
     }
