@@ -48,7 +48,7 @@ struct type_info
 }; /* type_info */
 
 
-TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *type, char* name)
+TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *elem_type, char* name)
 {	TYPE *t;
 	t = (TYPE *)malloc(sizeof(TYPE));
 	t->ty_name = name;
@@ -58,7 +58,7 @@ TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *type, char* name)
 	switch (kind)
 	{	
 		case Array:
-			t->ty_form.ty_array.ElementType = type;
+			t->ty_form.ty_array.ElementType = elem_type;
 			break;
 		case Record:
 			t->ty_form.ty_record.FirstField = id_list;
@@ -108,6 +108,8 @@ char* getIdKindName(ID_KIND kind) {
             return "Procedure";
         case Function:
             return "Function";
+        // TODO - RParameter, VParameter, and Field are kinds from the slides
+        // I bet I'll actually need to use them, but I'm not quite sure how yet.
         default:
             return "Unknown Kind";
     }
