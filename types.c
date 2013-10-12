@@ -4,6 +4,9 @@
  * I figure it it's already there for us... why should I bother rewriting it?
  */
 
+#include<stdlib.h>
+#include<string.h>
+#include<stdio.h>
 
 #define INTSIZE  4	/* integer data */
 #define CHARSIZE 1	/* character data */
@@ -12,20 +15,21 @@
 #define NOSIZE   0	/* unknown data */
 
 #define SCOPEDEPTH 3
-ID *scope [SCOPEDEPTH];
-int currscope = 0;
 
 
 
 
 
+typedef struct id_info ID;
+typedef struct type_info TYPE;
 typedef enum type_kind TY_KIND;
+typedef enum identifier_kind ID_KIND;
+
 enum type_kind {Integer, Char, Boolean, String, Array, 
                  Record, UndefinedType};
 // I'm not sure what all this is about... is ty_next so we have a linked list?
 // How am I_supposed to tell as I run down the list which is the one I want?
 //
-typedef struct type_info TYPE;
 struct type_info
  {	int ty_size;
         char* ty_name;
@@ -81,10 +85,10 @@ void typeinit (void)
 } /* typeinit */
 
 char* getTypeName(TYPE* type) {
-    if (type == null) {
+    if (type == NULL) {
         return "void";
     }
-    if (type->ty_name == null) {
+    if (type->ty_name == NULL) {
         return "unnamed-type";
     }
     return type->ty_name;
@@ -92,7 +96,6 @@ char* getTypeName(TYPE* type) {
 
 
 
-typedef enum identifier_kind ID_KIND;
 enum identifier_kind {Constant, Type, Variable, RParameter, VParameter, 
                        Field, Procedure, Function};
 
@@ -118,7 +121,6 @@ char* getIdKindName(ID_KIND kind) {
 
 // So these have built-in pointers to make a tree.
 // I'm not sure how I feel about that, but I'll roll with it.
-typedef struct id_info ID;
 struct id_info
 {	char *id_name;
 	int id_addr;
@@ -134,6 +136,10 @@ struct id_info
  }; /* id_info */
 
 
+
+// A couple global vars, because everybody loves them.
+ID *scope [SCOPEDEPTH];
+int currscope = 0;
 
 
 
@@ -181,18 +187,18 @@ void addIdToTable(ID* newId, ID* table) {
         addIdToTable(newId, table->id_right);
     } else {
         // Error
-        printf("Error - symbol %s defined twice in the same scope", newId->name);
+        printf("Error - symbol %s defined twice in the same scope", newId->id_name);
     }
 }
 
 void freeIdTree(ID* tree) {
-    if (tree == null) {
+    if (tree == NULL) {
         return;
     }
     freeIdTree(tree->id_left);
     freeIdTree(tree->id_right);
     free(tree);
-    // TODO - make sure this frees records and arrays properly.
+    // TODO - make sure this frees records and arrays properly, and strings inside them, etc.
 }
 
 void printTypeInfo(TYPE* type) {
@@ -203,7 +209,7 @@ void printTypeInfo(TYPE* type) {
 
 
 void printIdTree(ID* tree) {
-    if (tree == null) {
+    if (tree == NULL) {
         return;
     }
     // Let's do an inorder traversal
@@ -231,4 +237,3 @@ void printIdTree(ID* tree) {
     printIdTree(tree->id_right);
     
 }
-

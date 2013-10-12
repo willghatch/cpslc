@@ -132,6 +132,7 @@ varMaybe:
     ;
 body:
     constantDeclMaybe typeDeclMaybe varDeclMaybe block
+    { printf("In Body\n");}
     ;
 block:
     BEGINSYM statementSequence ENDSYM
