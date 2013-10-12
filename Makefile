@@ -26,5 +26,9 @@ cpslc.tab.o: cpslc.tab.c
 main.o: main.c
 	$(CC) $(CFLAGS) main.c 
 
+symtab.c: symtab.h
+symtab.o: symtab.c
+	$(CC) $(CFLAGS) symtab.c 
+
 cpslc: main.o lex.yy.o cpslc.tab.o
 	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o

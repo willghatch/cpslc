@@ -3,6 +3,7 @@
 %{
 #include<stdio.h>
 #include<stdlib.h>
+#include"symtab.h"
 int yyerror(const char *msg);
 int yylex(void);
 %}
