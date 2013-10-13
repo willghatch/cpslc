@@ -282,12 +282,12 @@ arrayType:
         if (emax != NULL && emax->kind == constant_expr && emax->type == int_type) {
             max = emax->int_val;
         }
+        // TODO -- get the array bounds better...
         if (min > max) {
             int temp = min;
             min = max;
             max = temp;
         }
-        // TODO - get the real min and max
         TYPE* elemType = $8;
         int size = elemType->ty_size * (max - min + 1);
         char* name = "array type";
@@ -446,12 +446,11 @@ expression:
     | SUCCSYM LPARENSYM expression RPARENSYM
         {$$ = NULL;} /* TODO - fix*/
     | lValue {
+        // TODO - umm... do this right.
         ID* id = scopeLookup($1);
         if (id != NULL && id->id_kind == Constant_id) {
             expr* e = id->const_expr;
-            printf("e val: %u\n", e);
             if (e != NULL && e->kind == constant_expr) {
-                printf("e is a constant_expr\n");
                 $$ = e;
             }
         } else {
