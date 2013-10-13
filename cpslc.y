@@ -14,6 +14,8 @@ int yylex(void);
 #include"symtab.h"
 #include"slist.h"
 #include"typedidentlist.h"
+
+void addIdentsOfType(slist* idents, TYPE* type);
 }
 
 %union{
@@ -142,23 +144,23 @@ procOrFuncDeclStar:
     | /* empty */ %prec EMPTY
     ;
 procedureDecl:
-    PROCEDURESYM identifier LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM SEMICOLONSYM
-    | PROCEDURESYM identifier LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body SEMICOLONSYM
-    /* TODO - put ID in table as proc (type void), then add level to stack and push parameters. */
+    PROCEDURESYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM {--currscope;} SEMICOLONSYM
+    | PROCEDURESYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body {--currscope;} SEMICOLONSYM
     ;
 functionDecl:
-    FUNCTIONSYM identifier LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM FORWARDSYM SEMICOLONSYM
-    | FUNCTIONSYM identifier LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM body SEMICOLONSYM
-    /* TODO - put ID in table as func, then add level to stack and push parameters. */
+    FUNCTIONSYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM FORWARDSYM {--currscope;} SEMICOLONSYM
+    | FUNCTIONSYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM body {--currscope;} SEMICOLONSYM
     ;
 formalParameters:
-    varMaybe identList COLONSYM type formalParameterExt
-    /* TODO - make linked list of id names, make ID obj's into list to return... don't push onto table yet... also link up the list from the ext*/
+    varMaybe identList COLONSYM type formalParameterExt {
+        addIdentsOfType($2, $4);
+    }
     | /* empty */ %prec EMPTY
     ;
 formalParameterExt:
-    SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt
-    /* TODO -- do same here as in normal formal parameters */
+    SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt {
+        addIdentsOfType($3, $5);
+    }
     | /* empty */ %prec EMPTY
     ;
 varMaybe:
@@ -470,6 +472,18 @@ int yyerror(const char *msg)
 
     printf("ERROR: %s -- at symbol \"%s\" on line %i.\n", msg, yytext, yylineno);
     exit(1);
+}
+
+
+void addIdentsOfType(slist* idents, TYPE* type) {
+    while(idents) {
+        char* name = idents->data;
+        ID* id = newid(name);
+        id->id_type = type;
+        addIdToTable(id, scope+currscope);
+        
+        idents = idents->next;
+    }
 }
 
 

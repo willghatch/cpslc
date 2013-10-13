@@ -197,6 +197,7 @@ void printTypeInfo(TYPE* type) {
         }
     }
     if(type->ty_kind == Array) {
+        printf("Note -- Array types are only partially supported so far.  The array bounds are hard coded, I haven't yet written the stuff to read the expressions.\n");
         printf(" Elem Type: %s\n", type->ty_form.ty_array.ElementType->ty_name);
         printf(" Min index: %i\n", type->ty_form.ty_array.min);
         printf(" Max index: %i\n", type->ty_form.ty_array.max);
