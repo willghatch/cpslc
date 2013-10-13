@@ -49,7 +49,7 @@ struct type_info
 	} ty_form;
 }; /* type_info */
 
-enum identifier_kind {Constant, Type, Variable, RParameter, VParameter, 
+enum identifier_kind {Constant_id, Type, Variable, RParameter, VParameter, 
                        Field, Procedure, Function};
 
 
@@ -86,7 +86,8 @@ void printTypeInfo(TYPE* type);
 void printIdTree(ID* tree);
 void scopePrint(int s);
 void symtabInit(void);
-void addIdToTable(ID* newId, ID** table);
+void addIdToTable_noAddrMove(ID* newId, ID** table);
+void addVarToCurTable(ID* var);
 
 
 
@@ -94,6 +95,8 @@ void addIdToTable(ID* newId, ID** table);
 extern ID *scope [SCOPEDEPTH];
 extern int currscope;
 extern TYPE *int_type, *bool_type, *char_type, *str_type, *undef_type;
+extern int scopeAddr [SCOPEDEPTH];
+extern int verbosity;
 
 #endif /*SYMTAB_H*/
 

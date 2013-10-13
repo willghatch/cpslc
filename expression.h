@@ -8,7 +8,7 @@
 
 typedef enum expr_kind_enum expr_kind;
 enum expr_kind_enum {
-    constant, lValue, procedureCall, operation, parenthesized
+    constant_expr, lValue, procedureCall, operation, parenthesized
 };
 
 typedef struct expression_struct expr;

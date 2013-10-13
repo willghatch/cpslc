@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "symtab.h"
 #include "parser.h"
 
@@ -10,6 +11,13 @@ int yylex();
 
 int main(int argc, char **argv)
 {
+    for(int i = 0; i < argc; ++i) {
+        if(!strcmp(argv[i], "--verbose")) {
+            verbosity = 1;
+        }
+    }
+
+
     FILE *infile = stdin;
     if (argc > 1)
     {
@@ -19,7 +27,7 @@ int main(int argc, char **argv)
 
     // Initialize symbol table
     symtabInit();
-    ++currscope;
+    pushScope();
 
     // Print out some help stuff...
     printf("\nTo use, either specify a file as the first (and only) argument, or pipe the desired\n");
@@ -29,9 +37,9 @@ int main(int argc, char **argv)
 
     // Parse stuff!
     yyparse();
-    scopePrint(currscope);
-    --currscope;
-    scopePrint(currscope);
+
+    popScope();
+    popScope(); // Incidentally, this call makes the scope stack pointer go out of bounds.  But hey, at this point I don't care.
 
     // If it reaches this line without breaking and exiting, we're good.
     printf("File parsed without error.\n");

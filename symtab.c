@@ -8,6 +8,7 @@
 #include<string.h>
 #include<stdio.h>
 #include"symtab.h"
+#include"expression.h"
 
 
 TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *elem_type, char* name)
@@ -50,14 +51,14 @@ void symtabInit(void) {
     typeinit();
     // Initialize pre-defined level of symbol table
     ID** s = scope;
-    addIdToTable(typeIdCreate(int_type, "integer"), s);
-    addIdToTable(typeIdCreate(int_type, "INTEGER"), s);
-    addIdToTable(typeIdCreate(char_type, "char"), s);
-    addIdToTable(typeIdCreate(char_type, "CHAR"), s);
-    addIdToTable(typeIdCreate(bool_type, "boolean"), s);
-    addIdToTable(typeIdCreate(bool_type, "BOOLEAN"), s);
-    addIdToTable(typeIdCreate(str_type, "string"), s);
-    addIdToTable(typeIdCreate(str_type, "STRING"), s);
+    addIdToTable_noAddrMove(typeIdCreate(int_type, "integer"), s);
+    addIdToTable_noAddrMove(typeIdCreate(int_type, "INTEGER"), s);
+    addIdToTable_noAddrMove(typeIdCreate(char_type, "char"), s);
+    addIdToTable_noAddrMove(typeIdCreate(char_type, "CHAR"), s);
+    addIdToTable_noAddrMove(typeIdCreate(bool_type, "boolean"), s);
+    addIdToTable_noAddrMove(typeIdCreate(bool_type, "BOOLEAN"), s);
+    addIdToTable_noAddrMove(typeIdCreate(str_type, "string"), s);
+    addIdToTable_noAddrMove(typeIdCreate(str_type, "STRING"), s);
     
     // TODO - add true and false (upper and lower) to table
 
@@ -75,7 +76,7 @@ char* getTypeName(TYPE* type) {
 
 char* getIdKindName(ID_KIND kind) {
     switch(kind) {
-        case Constant:
+        case Constant_id:
             return "Constant";
         case Type:
             return "Type";
@@ -134,7 +135,7 @@ ID* scopeLookup(char* name) {
     return NULL;
 }
 
-void addIdToTable(ID* newId, ID** table) {
+void addIdToTable_noAddrMove(ID* newId, ID** table) {
     if (*table == NULL) {
         *table = newId;
         return;
@@ -142,15 +143,21 @@ void addIdToTable(ID* newId, ID** table) {
     int cmp = strcmp(newId->id_name, (*table)->id_name);
     if (cmp < 0) { // newId name < current element name
         ID** p = &((*table)->id_left);
-        addIdToTable(newId, p);
+        addIdToTable_noAddrMove(newId, p);
     } else if (cmp > 0) { // newId name > current element name
         ID** p = &((*table)->id_right);
-        addIdToTable(newId, p);
+        addIdToTable_noAddrMove(newId, p);
     } else {
         // Error
         printf("Error - symbol %s defined twice in the same scope\n", newId->id_name);
         // TODO - Exit or something here probably
     }
+}
+
+void addVarToCurTable(ID* var) {
+    var->id_addr = scopeAddr[currscope];
+    scopeAddr[currscope] += var->id_type->ty_size;
+    addIdToTable_noAddrMove(var, scope+currscope);
 }
 
 void freeIdTree(ID* tree) {
@@ -197,11 +204,31 @@ void printTypeInfo(TYPE* type) {
         }
     }
     if(type->ty_kind == Array) {
-        printf("Note -- Array types are only partially supported so far.  The array bounds are hard coded, I haven't yet written the stuff to read the expressions.\n");
         printf(" Elem Type: %s\n", type->ty_form.ty_array.ElementType->ty_name);
         printf(" Min index: %i\n", type->ty_form.ty_array.min);
         printf(" Max index: %i\n", type->ty_form.ty_array.max);
     }
+}
+
+void printConstInfo(ID* c) {
+    if(c == NULL || c->id_kind != Constant_id) {
+        return;
+    }
+    expr* e = c->const_expr;
+    if(e->kind == constant_expr) {
+        if(c->id_type == int_type) {
+            printf(" Value: %i\n", e->int_val);
+        } else if (c->id_type == char_type) {
+            printf(" Value: %c\n", e->char_val);
+        } else if (c->id_type == str_type) {
+            printf(" Value: \"%s\"", e->str_val);
+        }
+    }
+}
+
+void printVarInfo(ID* v) {
+    printf(" Size: %i\n", v->id_type->ty_size);
+    printf(" Offset in scope space: %i\n", v->id_addr);
 }
 
 void printIdTree(ID* tree) {
@@ -224,8 +251,11 @@ void printIdTree(ID* tree) {
     if (tree->id_kind == Procedure || tree->id_kind == Function) {
         // TODO - Print function info... 
     }
-    if (tree->id_kind == Constant) {
-        // TODO - Print out the constant value
+    if (tree->id_kind == Constant_id) {
+        printConstInfo(tree);
+    }
+    if (tree->id_kind == Variable) {
+        printVarInfo(tree);
     }
 
     // Print right side now
@@ -241,4 +271,7 @@ void scopePrint(int s) {
 ID *scope [SCOPEDEPTH];
 int currscope = 0;
 TYPE *int_type, *bool_type, *char_type, *str_type, *undef_type;
+int scopeAddr [SCOPEDEPTH] = {0,0,0}; // TODO - Ok, ideally I should initialize
+    // this in a loop in case the scope depth changes... but for now... bleh.
+int verbosity = 0;
 

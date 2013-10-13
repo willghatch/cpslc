@@ -15,7 +15,9 @@ int yylex(void);
 #include"slist.h"
 #include"typedidentlist.h"
 
-void addIdentsOfType(slist* idents, TYPE* type);
+void addVarsOfType(slist* idents, TYPE* type);
+void pushScope();
+void popScope();
 }
 
 %union{
@@ -90,6 +92,7 @@ void addIdentsOfType(slist* idents, TYPE* type);
 %type <str_val>   simpleType
 %type <type_val>  recordType
 %type <type_val>  arrayType
+%type <str_val>   lValue /* TODO - fix this */
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -131,9 +134,9 @@ subConstantDecl:
         ID* id; 
         id = newid($1); 
         id->id_type = $3->type; 
-        id->id_kind = Constant; 
+        id->id_kind = Constant_id; 
         id->const_expr = $3;
-        addIdToTable(id, scope+currscope);
+        addIdToTable_noAddrMove(id, scope+currscope);
     }
     ;
 
@@ -144,22 +147,36 @@ procOrFuncDeclStar:
     | /* empty */ %prec EMPTY
     ;
 procedureDecl:
-    PROCEDURESYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM {--currscope;} SEMICOLONSYM
-    | PROCEDURESYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body {--currscope;} SEMICOLONSYM
+    PROCEDURESYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM forwardOrBody {popScope();} SEMICOLONSYM {
+        ID* func = newid($2);
+        func->id_kind = Procedure;
+        func->id_type = undef_type;
+        // TODO - get the formal parameters and add them in here somehow
+        addIdToTable_noAddrMove(func, scope+currscope);
+    }
     ;
 functionDecl:
-    FUNCTIONSYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM FORWARDSYM {--currscope;} SEMICOLONSYM
-    | FUNCTIONSYM identifier {++currscope;} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM body {--currscope;} SEMICOLONSYM
+    FUNCTIONSYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM forwardOrBody {popScope();} SEMICOLONSYM {
+        ID* func = newid($2);
+        func->id_kind = Function;
+        func->id_type = $8;
+        // TODO - get the formal parameters and add them in here somehow
+        addIdToTable_noAddrMove(func, scope+currscope);
+    }
+    ;
+forwardOrBody:
+    FORWARDSYM
+    | body
     ;
 formalParameters:
     varMaybe identList COLONSYM type formalParameterExt {
-        addIdentsOfType($2, $4);
+        addVarsOfType($2, $4);
     }
     | /* empty */ %prec EMPTY
     ;
 formalParameterExt:
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt {
-        addIdentsOfType($3, $5);
+        addVarsOfType($3, $5);
     }
     | /* empty */ %prec EMPTY
     ;
@@ -193,7 +210,7 @@ identEqType:
         TYPE* type = $3;
         type->ty_name = $1;
         typeid->id_type = type;
-        addIdToTable(typeid, scope+currscope);
+        addIdToTable_noAddrMove(typeid, scope+currscope);
     }
     ;
 type:
@@ -201,7 +218,7 @@ type:
     simpleType {
         ID* id = scopeLookup($1);
         if (id == NULL) {
-            printf("Error: trying to use undefined type %s\n", $1);
+            yyerror("Error: trying to use undefined type");
             exit(1);
         }
         $$ = id->id_type;
@@ -248,7 +265,6 @@ identListsOfTypeStar:
         idents->names = $1;
         slist* tyList = mkSlist(idents);
         tyList->next = $5;
-            printf("identList with field with type %s\n", $3->ty_name);
         $$ = tyList;
     }
     | /* empty */ %prec EMPTY
@@ -257,7 +273,15 @@ identListsOfTypeStar:
 arrayType:
     ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type {
         int min = 0;
-        int max = 5;
+        int max = 0;
+        expr* emin = $3;
+        expr* emax = $5;
+        if (emin != NULL && emin->kind == constant_expr && emin->type == int_type) {
+            min = emin->int_val;
+        }
+        if (emax != NULL && emax->kind == constant_expr && emax->type == int_type) {
+            max = emax->int_val;
+        }
         if (min > max) {
             int temp = min;
             min = max;
@@ -309,12 +333,12 @@ varDeclExt:
         slist* ls = $1;
         TYPE* type = $3;
         if (type == NULL) {
-            printf("Error, trying to declare variable %s of unknown type\n", ls->data);
+            yyerror("Error, trying to declare variable of unknown type");
         }
         while (ls != NULL) {
             ID* id = newid(ls->data);
             id->id_type = type;
-            addIdToTable(id, scope+currscope);
+            addVarToCurTable(id);
             ls = ls->next;
         }
     }
@@ -421,8 +445,19 @@ expression:
         {$$ = NULL;} /* TODO - fix*/
     | SUCCSYM LPARENSYM expression RPARENSYM
         {$$ = NULL;} /* TODO - fix*/
-    | lValue
-        {$$ = NULL;} /* TODO - fix*/
+    | lValue {
+        ID* id = scopeLookup($1);
+        if (id != NULL && id->id_kind == Constant_id) {
+            expr* e = id->const_expr;
+            printf("e val: %u\n", e);
+            if (e != NULL && e->kind == constant_expr) {
+                printf("e is a constant_expr\n");
+                $$ = e;
+            }
+        } else {
+            $$ = NULL;
+        }
+    }
     | NUMERICALSYM
         {$$ = newNumExpr(yylval.int_val);}
     | CHARACTERSYM
@@ -450,7 +485,10 @@ binaryOp:
     | PERCENTSYM 
     ;
 lValue:
-    identifier dotIdentOrExpStar
+    identifier dotIdentOrExpStar {
+        // TODO - make this work for real
+        $$ = $1;
+    }
     ;
 dotIdentOrExpStar:
     PERIODSYM identifier dotIdentOrExpStar
@@ -475,15 +513,28 @@ int yyerror(const char *msg)
 }
 
 
-void addIdentsOfType(slist* idents, TYPE* type) {
+void addVarsOfType(slist* idents, TYPE* type) {
     while(idents) {
         char* name = idents->data;
         ID* id = newid(name);
         id->id_type = type;
-        addIdToTable(id, scope+currscope);
+        addVarToCurTable(id);
         
         idents = idents->next;
     }
 }
 
+void pushScope() {
+    ++currscope;
+    scopeAddr[currscope] = 0;
+}
+
+void popScope() {
+    if(verbosity) {
+        scopePrint(currscope);
+    }
+    freeIdTree(scope[currscope]);
+    scope[currscope] = NULL;
+    --currscope;
+}
 
