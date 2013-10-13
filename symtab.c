@@ -157,3 +157,8 @@ void printIdTree(ID* tree) {
     printIdTree(tree->id_right);
 }
 
+// Everybody loves global variables
+ID *scope [SCOPEDEPTH];
+int currscope = 0;
+TYPE *int_type, *bool_type, *char_type, *str_type, *undef_type;
+

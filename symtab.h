@@ -59,10 +59,10 @@ struct id_info
 	int id_addr;
 	int id_level;
 	TYPE *id_type;
+	ID_KIND id_kind;
 	ID *id_left;
 	ID *id_right;
 	// id_left and id_right is for a tree of ID's for the symbol table...
-	ID_KIND id_kind;
 	ID *id_next;
 	// id_next is for a linked list of ID's for a record type...
 	int id_value;
@@ -84,9 +84,9 @@ void printIdTree(ID* tree);
 
 
 // A couple global vars, because everybody loves them.
-ID *scope [SCOPEDEPTH];
-int currscope = 0;
-TYPE *int_type, *bool_type, *char_type, *str_type, *undef_type;
+extern ID *scope [SCOPEDEPTH];
+extern int currscope;
+extern TYPE *int_type, *bool_type, *char_type, *str_type, *undef_type;
 
 #endif /*SYMTAB_H*/
 

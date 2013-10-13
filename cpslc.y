@@ -4,14 +4,21 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include"symtab.h"
+#include"expression.h"
 int yyerror(const char *msg);
 int yylex(void);
 %}
+
+%code requires {
+#include"expression.h"
+}
 
 %union{
     int int_val;
     char char_val;
     char *str_val;
+
+    expr* expr_val;
 }
 /* give verbose errors */
 %error-verbose
@@ -66,6 +73,9 @@ int yylex(void);
 %token            WHILESYM 
 %token            WRITESYM 
 
+%type <expr_val>  expression
+%type <str_val>   identifier 
+
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
 %left AMPERSANDSYM
@@ -103,6 +113,7 @@ subConstantDeclPlus:
     ;
 subConstantDecl:
     identifier EQUALSYM expression SEMICOLONSYM
+    /* TODO - put ident in table, but calculating the value and type of expr /*
     ;
 
 /* Procedure and Function Declarations */
@@ -114,17 +125,21 @@ procOrFuncDeclStar:
 procedureDecl:
     PROCEDURESYM identifier LPARENSYM formalParameters RPARENSYM SEMICOLONSYM FORWARDSYM SEMICOLONSYM
     | PROCEDURESYM identifier LPARENSYM formalParameters RPARENSYM SEMICOLONSYM body SEMICOLONSYM
+    /* TODO - put ID in table as proc (type void), then add level to stack and push parameters. */
     ;
 functionDecl:
     FUNCTIONSYM identifier LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM FORWARDSYM SEMICOLONSYM
     | FUNCTIONSYM identifier LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM body SEMICOLONSYM
+    /* TODO - put ID in table as func, then add level to stack and push parameters. */
     ;
 formalParameters:
     varMaybe identList COLONSYM type formalParameterExt
+    /* TODO - make linked list of id names, make ID obj's into list to return... don't push onto table yet... also link up the list from the ext*/
     | /* empty */ %prec EMPTY
     ;
 formalParameterExt:
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt
+    /* TODO -- do same here as in normal formal parameters */
     | /* empty */ %prec EMPTY
     ;
 varMaybe:
@@ -282,17 +297,29 @@ nullStatement:
 /* Expressions */
 expression:
     unaryOp expression
+        {$$ = NULL;} /* TODO - fix*/
     | expression binaryOp expression
+        {$$ = NULL;} /* TODO - fix*/
     | LPARENSYM expression RPARENSYM
+        {$$ = NULL;} /* TODO - fix*/
     | procedureCall
+        {$$ = NULL;} /* TODO - fix*/
     | CHRSYM LPARENSYM expression RPARENSYM
+        {$$ = NULL;} /* TODO - fix*/
     | ORDSYM LPARENSYM expression RPARENSYM
+        {$$ = NULL;} /* TODO - fix*/
     | PREDSYM LPARENSYM expression RPARENSYM
+        {$$ = NULL;} /* TODO - fix*/
     | SUCCSYM LPARENSYM expression RPARENSYM
+        {$$ = NULL;} /* TODO - fix*/
     | lValue
+        {$$ = NULL;} /* TODO - fix*/
     | NUMERICALSYM
+        {$$ = newNumExpr(yylval.int_val);}
     | CHARACTERSYM
-    | STRINGSYM                                     {free(yylval.str_val);}
+        {$$ = newCharExpr(yylval.char_val);}
+    | STRINGSYM
+        {$$ = newStrExpr(yylval.str_val);}
     ;
 unaryOp:
     TILDESYM
@@ -322,7 +349,7 @@ dotIdentOrExpStar:
     | /* empty */ %prec EMPTY
     ;
 identifier:
-    IDENTSYM                        {free(yylval.str_val);}
+    IDENTSYM                        {$$ = yylval.str_val;}
     ;
 
 

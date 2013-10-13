@@ -17,18 +17,23 @@ lex.yy.c: cpslc.lex
 lex.yy.o: lex.yy.c cpslc.tab.c
 	$(CC) $(CFLAGS) lex.yy.c 
 
+parser.h: cpslc.tab.c
 cpslc.tab.c: cpslc.y
 	bison cpslc.y
 
 cpslc.tab.o: cpslc.tab.c
 	$(CC) $(CFLAGS) cpslc.tab.c 
 
-main.o: main.c
+main.o: main.c parser.h
 	$(CC) $(CFLAGS) main.c 
 
 symtab.c: symtab.h
 symtab.o: symtab.c
 	$(CC) $(CFLAGS) symtab.c 
 
-cpslc: main.o lex.yy.o cpslc.tab.o
-	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o
+expression.c: expression.h
+expression.o: expression.c
+	$(CC) $(CFLAGS) expression.c 
+
+cpslc: main.o lex.yy.o cpslc.tab.o symtab.o expression.o
+	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o expression.o symtab.o
