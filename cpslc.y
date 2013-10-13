@@ -24,6 +24,7 @@ int yylex(void);
     expr* expr_val;
     slist* list_ptr;
     ID* ID_val;
+    TYPE* type_val;
 }
 /* give verbose errors */
 %error-verbose
@@ -80,11 +81,13 @@ int yylex(void);
 
 %type <expr_val>  expression
 %type <str_val>   identifier 
-%type <ID_val>    type
+%type <type_val>    type
 %type <list_ptr>  identListsOfTypeStar
 %type <list_ptr>  identList
 %type <list_ptr>  identExt 
-
+%type <str_val>   simpleType
+%type <type_val>  recordType
+%type <type_val>  arrayType
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -182,38 +185,91 @@ identEqTypePlus:
     | identEqType
     ;
 identEqType:
-    identifier EQUALSYM type SEMICOLONSYM
+    identifier EQUALSYM type SEMICOLONSYM {
+        ID* typeid = newid($1);
+        typeid->id_kind = Type;
+        TYPE* type = $3;
+        type->ty_name = $1;
+        typeid->id_type = type;
+        addIdToTable(typeid, scope+currscope);
+    }
     ;
 type:
-    /* TODO - return real type ID* */
-    simpleType
-        {$$ = IDsearch("integer", scope[0]);}
-    | recordType
-        {$$ = IDsearch("integer", scope[0]);}
+    /* TODO - return real TYPE* */
+    simpleType {
+        ID* id = scopeLookup($1);
+        if (id == NULL) {
+            printf("Error: trying to use undefined type %s\n", $1);
+            exit(1);
+        }
+        $$ = id->id_type;
+    }
+    | recordType {
+        $$ = $1;
+    }
     | arrayType
-        {$$ = IDsearch("integer", scope[0]);}
+        {$$ = $1;}
     ;
 simpleType:
     identifier
+        {$$ = $1;}
     ;
 recordType:
-    RECORDSYM identListsOfTypeStar ENDSYM
+    RECORDSYM identListsOfTypeStar ENDSYM {
+        slist* tyList = $2;
+        int size = 0;
+        ID* idlist = NULL;
+        while (tyList != NULL) {
+            typedidentlist* types = tyList->data;
+            TYPE* type = types->type;
+            slist* names = types->names;
+            while (names != NULL) {
+                ID* newId = newid(names->data);
+                newId->id_type = type;
+                newId->id_next = idlist;
+                idlist = newId;
+                size += type->ty_size;
+
+                names = names->next;
+            }
+            tyList = tyList->next;
+        }
+        TYPE* newType = typecreate(size, Record, idlist, NULL, NULL);
+        $$ = newType;
+    }
     ;
 identListsOfTypeStar:
     /* slist of typedidentlists */
     identList COLONSYM type SEMICOLONSYM identListsOfTypeStar {
         typedidentlist* idents = malloc(sizeof(typedidentlist));
-        idents->type_id = $3;
+        idents->type = $3;
         idents->names = $1;
         slist* tyList = mkSlist(idents);
         tyList->next = $5;
+            printf("identList with field with type %s\n", $3->ty_name);
         $$ = tyList;
     }
     | /* empty */ %prec EMPTY
         {$$ = NULL;}
     ;
 arrayType:
-    ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type
+    ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type {
+        int min = 0;
+        int max = 5;
+        if (min > max) {
+            int temp = min;
+            min = max;
+            max = temp;
+        }
+        // TODO - get the real min and max
+        TYPE* elemType = $8;
+        int size = elemType->ty_size * (max - min + 1);
+        char* name = "array type";
+        TYPE* newtype = typecreate(size, Array, NULL, elemType, name);
+        newtype->ty_form.ty_array.min = min;
+        newtype->ty_form.ty_array.max = max;
+        $$ = newtype;
+    }
     ;
 identList:
     /* slist of identifier names */
@@ -249,10 +305,13 @@ varDeclExtPlus:
 varDeclExt:
     identList COLONSYM type SEMICOLONSYM {
         slist* ls = $1;
-        ID* typeid = $3;
+        TYPE* type = $3;
+        if (type == NULL) {
+            printf("Error, trying to declare variable %s of unknown type\n", ls->data);
+        }
         while (ls != NULL) {
             ID* id = newid(ls->data);
-            id->id_type = typeid->id_type;
+            id->id_type = type;
             addIdToTable(id, scope+currscope);
             ls = ls->next;
         }

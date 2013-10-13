@@ -21,13 +21,13 @@ typedef struct type_info TYPE;
 typedef enum type_kind TY_KIND;
 typedef enum identifier_kind ID_KIND;
 
-enum type_kind {Integer, Char, Boolean, String, Array, 
-                 Record, UndefinedType};
+enum type_kind {Integer, Char, Boolean, String, Array, Record, UndefinedType};
 // I'm not sure what all this is about... is ty_next so we have a linked list?
 // How am I_supposed to tell as I run down the list which is the one I want?
 //
 struct type_info
  {	int ty_size;
+        // TODO - I added this name field, but I think it was a bad idea...
         char* ty_name;
  	TY_KIND ty_kind;
  	TYPE *ty_next;
@@ -40,6 +40,8 @@ struct type_info
 		struct
 		{	TYPE *ElementType;
 			TYPE *IndexType;
+			int min;
+			int max;
 		} ty_array;
 		struct
 		{	ID *FirstField;
@@ -78,6 +80,7 @@ char* getTypeName(TYPE* type);
 char* getIdKindName(ID_KIND kind);
 ID *newid (char *name);
 ID *IDsearch (char *name, ID *table);
+ID* scopeLookup(char* name);
 void freeIdTree(ID* tree);
 void printTypeInfo(TYPE* type);
 void printIdTree(ID* tree);

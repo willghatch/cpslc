@@ -7,7 +7,7 @@
 
 typedef struct typedidentlist_struct typedidentlist;
 struct typedidentlist_struct {
-    ID* type_id;
+    TYPE* type;
     slist* names;
 };
 

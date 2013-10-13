@@ -39,8 +39,8 @@ ID* typeIdCreate(TYPE* type, char* name) {
 }
 
 void typeinit (void)
-{	int_type = typecreate(INTSIZE, Integer, NULL, NULL, "int");
-	bool_type = typecreate(BOOLSIZE, Boolean, NULL, NULL, "bool");
+{	int_type = typecreate(INTSIZE, Integer, NULL, NULL, "integer");
+	bool_type = typecreate(BOOLSIZE, Boolean, NULL, NULL, "boolean");
 	char_type = typecreate(CHARSIZE, Char, NULL, NULL, "char");
 	str_type = typecreate(POINTSIZE, String, NULL, NULL, "string");
 	undef_type = typecreate(NOSIZE, UndefinedType, NULL, NULL, "undefinded");
@@ -121,7 +121,18 @@ ID *IDsearch (char *name, ID *table)
 		return(IDsearch(name, table->id_left));
 	else
 		return(IDsearch(name, table->id_right));
- } /* search */
+} /* search */
+
+ID* scopeLookup(char* name) {
+    ID* id;
+    for (int i = currscope; i >= 0; --i) {
+        id = IDsearch(name, scope[i]);
+        if(id) {
+            return id;
+        }
+    }
+    return NULL;
+}
 
 void addIdToTable(ID* newId, ID** table) {
     if (*table == NULL) {
@@ -137,7 +148,7 @@ void addIdToTable(ID* newId, ID** table) {
         addIdToTable(newId, p);
     } else {
         // Error
-        printf("Error - symbol %s defined twice in the same scope", newId->id_name);
+        printf("Error - symbol %s defined twice in the same scope\n", newId->id_name);
         // TODO - Exit or something here probably
     }
 }
@@ -152,10 +163,44 @@ void freeIdTree(ID* tree) {
     // TODO - make sure this frees records and arrays properly, and strings inside them, etc.
 }
 
+char* getTypeKindName(TY_KIND kind) {
+    switch(kind) {
+        case Integer:
+            return "Integer";
+        case Char:
+            return "Char";
+        case Boolean:
+            return "Boolean";
+        case String:
+            return "String";
+        case Array:
+            return "Array";
+        case Record:
+            return "Record";
+        case UndefinedType:
+            return "UndefinedType";
+    }
+}
+
 void printTypeInfo(TYPE* type) {
     // I'll need to print the size... for arrays maybe just the number of elements
     // for records I need to print the layout.
     // TODO - implement this
+    printf(" Type kind: %s\n", getTypeKindName(type->ty_kind));
+    printf(" Type size: %i\n", type->ty_size);
+    if(type->ty_kind == Record) {
+        printf(" Layout:\n");
+        ID* id = type->ty_form.ty_record.FirstField;
+        while(id != NULL) {
+            printf("  field %s of type %s\n", id->id_name, id->id_type->ty_name);
+            id = id->id_next;
+        }
+    }
+    if(type->ty_kind == Array) {
+        printf(" Elem Type: %s\n", type->ty_form.ty_array.ElementType->ty_name);
+        printf(" Min index: %i\n", type->ty_form.ty_array.min);
+        printf(" Max index: %i\n", type->ty_form.ty_array.max);
+    }
 }
 
 void printIdTree(ID* tree) {
