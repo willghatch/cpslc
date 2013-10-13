@@ -11,18 +11,19 @@ int yylex();
 
 int main(int argc, char **argv)
 {
-    for(int i = 0; i < argc; ++i) {
+
+    FILE *infile = stdin;
+
+    for(int i = 1; i < argc; ++i) {
         if(!strcmp(argv[i], "--verbose")) {
             verbosity = 1;
         }
+        else {
+            // I'm just assuming this is the file name if it's not the verbose flag
+            infile = fopen(argv[1], "r");
+        }
     }
 
-
-    FILE *infile = stdin;
-    if (argc > 1)
-    {
-        infile = fopen(argv[1], "r");
-    }
     yyin = infile;
 
     // Initialize symbol table
@@ -32,6 +33,7 @@ int main(int argc, char **argv)
     // Print out some help stuff...
     printf("\nTo use, either specify a file as the first (and only) argument, or pipe the desired\n");
     printf("input to stdin.\n");
+    printf("If you want, add --verbose for verbosity.  It's the only option.\n");
 
     printf("\n\n\n");
 

@@ -8,6 +8,8 @@ It reads from the file specified in the first command line parameter, or stdin.
 It currently has shift/reduce errors on two rules, but I want them to shift.  Later
 maybe I'll iron those out.
 
+It has a verbose option that can be enabled by adding --verbose
+
 
 The executable "lextest" is just a lexical analyzer.  It prints int values for the symbols found, and their yylval
 value if they're an identifier or constant (int, string, or char).  It takes the name of a file or
