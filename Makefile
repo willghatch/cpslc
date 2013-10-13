@@ -1,7 +1,11 @@
 # Mmm... I'll generalize this and remove duplication later... for now it's hard coded.
 
 CC=gcc
-CFLAGS=--std=gnu99 -c
+BASE_CFLAGS=--std=gnu99 -c
+DEBUGFLAGS=-g
+RELEASEFLAGS=-O3
+
+CFLAGS=$(BASE_CFLAGS) $(DEBUGFLAGS)
 
 all: cpslc lextest
 
@@ -41,3 +45,4 @@ slist.o: slist.c
 
 cpslc: main.o lex.yy.o cpslc.tab.o symtab.o expression.o slist.o
 	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o expression.o symtab.o slist.o
+

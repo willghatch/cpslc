@@ -77,7 +77,7 @@ TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *elem_type, char* na
 char* getTypeName(TYPE* type);
 char* getIdKindName(ID_KIND kind);
 ID *newid (char *name);
-ID *search (char *name, ID *table);
+ID *IDsearch (char *name, ID *table);
 void freeIdTree(ID* tree);
 void printTypeInfo(TYPE* type);
 void printIdTree(ID* tree);

@@ -109,7 +109,7 @@ ID *newid (char *name)
 	return(new_id);
 } /* newid */
 
-ID *search (char *name, ID *table)
+ID *IDsearch (char *name, ID *table)
 {	int temp;
  
 	if (table == NULL)
@@ -118,9 +118,9 @@ ID *search (char *name, ID *table)
 	if (temp == 0)
 		return(table);
 	else if (temp < 0)
-		return(search(name, table->id_left));
+		return(IDsearch(name, table->id_left));
 	else
-		return(search(name, table->id_right));
+		return(IDsearch(name, table->id_right));
  } /* search */
 
 void addIdToTable(ID* newId, ID** table) {

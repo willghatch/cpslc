@@ -185,13 +185,13 @@ identEqType:
     identifier EQUALSYM type SEMICOLONSYM
     ;
 type:
-    /* TODO - return or ID* */
+    /* TODO - return real type ID* */
     simpleType
-        {$$ = NULL;}
+        {$$ = IDsearch("integer", scope[0]);}
     | recordType
-        {$$ = NULL;}
+        {$$ = IDsearch("integer", scope[0]);}
     | arrayType
-        {$$ = NULL;}
+        {$$ = IDsearch("integer", scope[0]);}
     ;
 simpleType:
     identifier
@@ -200,6 +200,7 @@ recordType:
     RECORDSYM identListsOfTypeStar ENDSYM
     ;
 identListsOfTypeStar:
+    /* slist of typedidentlists */
     identList COLONSYM type SEMICOLONSYM identListsOfTypeStar {
         typedidentlist* idents = malloc(sizeof(typedidentlist));
         idents->type_id = $3;
@@ -215,6 +216,7 @@ arrayType:
     ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type
     ;
 identList:
+    /* slist of identifier names */
     identifier identExt {
         slist* ls = mkSlist($1);
         ls->next = $2;
@@ -222,6 +224,7 @@ identList:
     }
     ;
 identExt:
+    /* slist of identifier names */
     COMMASYM identifier identExt {
         slist* ls = mkSlist($2);
         ls->next = $3;
@@ -233,7 +236,7 @@ identExt:
 
 /* Variable Declarations */
 varDeclMaybe:
-    varDecl
+    varDecl 
     | /* empty */ %prec EMPTY
     ;
 varDecl:
@@ -244,7 +247,16 @@ varDeclExtPlus:
     | varDeclExt
     ;
 varDeclExt:
-    identList COLONSYM type SEMICOLONSYM
+    identList COLONSYM type SEMICOLONSYM {
+        slist* ls = $1;
+        ID* typeid = $3;
+        while (ls != NULL) {
+            ID* id = newid(ls->data);
+            id->id_type = typeid->id_type;
+            addIdToTable(id, scope+currscope);
+            ls = ls->next;
+        }
+    }
     ;
 
 /* Statements */
