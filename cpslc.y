@@ -11,7 +11,9 @@ int yylex(void);
 
 %code requires {
 #include"expression.h"
+#include"symtab.h"
 #include"slist.h"
+#include"typedidentlist.h"
 }
 
 %union{
@@ -20,6 +22,8 @@ int yylex(void);
     char *str_val;
 
     expr* expr_val;
+    slist* list_ptr;
+    ID* ID_val;
 }
 /* give verbose errors */
 %error-verbose
@@ -76,6 +80,11 @@ int yylex(void);
 
 %type <expr_val>  expression
 %type <str_val>   identifier 
+%type <ID_val>    type
+%type <list_ptr>  identListsOfTypeStar
+%type <list_ptr>  identList
+%type <list_ptr>  identExt 
+
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -176,9 +185,13 @@ identEqType:
     identifier EQUALSYM type SEMICOLONSYM
     ;
 type:
+    /* TODO - return or ID* */
     simpleType
+        {$$ = NULL;}
     | recordType
+        {$$ = NULL;}
     | arrayType
+        {$$ = NULL;}
     ;
 simpleType:
     identifier
@@ -187,18 +200,35 @@ recordType:
     RECORDSYM identListsOfTypeStar ENDSYM
     ;
 identListsOfTypeStar:
-    identList COLONSYM type SEMICOLONSYM identListsOfTypeStar
+    identList COLONSYM type SEMICOLONSYM identListsOfTypeStar {
+        typedidentlist* idents = malloc(sizeof(typedidentlist));
+        idents->type_id = $3;
+        idents->names = $1;
+        slist* tyList = mkSlist(idents);
+        tyList->next = $5;
+        $$ = tyList;
+    }
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 arrayType:
     ARRAYSYM LBRACKETSYM expression COLONSYM expression RBRACKETSYM OFSYM type
     ;
 identList:
-    identifier identExt
+    identifier identExt {
+        slist* ls = mkSlist($1);
+        ls->next = $2;
+        $$ = ls;
+    }
     ;
 identExt:
-    COMMASYM identifier identExt
+    COMMASYM identifier identExt {
+        slist* ls = mkSlist($2);
+        ls->next = $3;
+        $$ = ls;
+    }
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}    
     ;
 
 /* Variable Declarations */

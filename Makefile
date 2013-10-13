@@ -35,5 +35,9 @@ expression.c: expression.h
 expression.o: expression.c
 	$(CC) $(CFLAGS) expression.c 
 
-cpslc: main.o lex.yy.o cpslc.tab.o symtab.o expression.o
-	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o expression.o symtab.o
+slist.c: slist.h
+slist.o: slist.c
+	$(CC) $(CFLAGS) slist.c 
+
+cpslc: main.o lex.yy.o cpslc.tab.o symtab.o expression.o slist.o
+	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o expression.o symtab.o slist.o

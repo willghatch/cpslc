@@ -5,9 +5,17 @@
  * so I'm writing my own, to everybody's horror.
  */
 
+#ifndef SLIST_H
+#define SLIST_H
+
 typedef struct slist_struct slist;
 struct slist_struct {
     slist* next;
     void* data;
 };
+
+
+slist* mkSlist(void* datum);
+
+#endif //SLIST_H
 
