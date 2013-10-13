@@ -31,6 +31,13 @@ TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *elem_type, char* na
 	return(t);
 } /* typecreate */
 
+ID* typeIdCreate(TYPE* type, char* name) {
+    ID* id = newid(name);
+    id->id_kind = Type;
+    id->id_type = type;
+    return id;
+}
+
 void typeinit (void)
 {	int_type = typecreate(INTSIZE, Integer, NULL, NULL, "int");
 	bool_type = typecreate(BOOLSIZE, Boolean, NULL, NULL, "bool");
@@ -38,6 +45,23 @@ void typeinit (void)
 	str_type = typecreate(POINTSIZE, String, NULL, NULL, "string");
 	undef_type = typecreate(NOSIZE, UndefinedType, NULL, NULL, "undefinded");
 } /* typeinit */
+
+void symtabInit(void) {
+    typeinit();
+    // Initialize pre-defined level of symbol table
+    ID** s = scope;
+    addIdToTable(typeIdCreate(int_type, "integer"), s);
+    addIdToTable(typeIdCreate(int_type, "INTEGER"), s);
+    addIdToTable(typeIdCreate(char_type, "char"), s);
+    addIdToTable(typeIdCreate(char_type, "CHAR"), s);
+    addIdToTable(typeIdCreate(bool_type, "boolean"), s);
+    addIdToTable(typeIdCreate(bool_type, "BOOLEAN"), s);
+    addIdToTable(typeIdCreate(str_type, "string"), s);
+    addIdToTable(typeIdCreate(str_type, "STRING"), s);
+    
+    // TODO - add true and false (upper and lower) to table
+
+}
 
 char* getTypeName(TYPE* type) {
     if (type == NULL) {
@@ -80,7 +104,8 @@ ID *newid (char *name)
 	new_id->id_right = NULL;
 	new_id->id_kind = Variable;
 	new_id->id_next = NULL;
-	new_id->id_value = 0;
+	//new_id->id_value = 0;
+	new_id->const_expr = NULL;
 	return(new_id);
 } /* newid */
 
@@ -98,18 +123,22 @@ ID *search (char *name, ID *table)
 		return(search(name, table->id_right));
  } /* search */
 
-void addIdToTable(ID* newId, ID* table) {
-    if (table == NULL) {
-        table = newId;
+void addIdToTable(ID* newId, ID** table) {
+    if (*table == NULL) {
+        *table = newId;
+        return;
     } 
-    int cmp = strcmp(newId->id_name, table->id_name);
+    int cmp = strcmp(newId->id_name, (*table)->id_name);
     if (cmp < 0) { // newId name < current element name
-        addIdToTable(newId, table->id_left);
+        ID** p = &((*table)->id_left);
+        addIdToTable(newId, p);
     } else if (cmp > 0) { // newId name > current element name
-        addIdToTable(newId, table->id_right);
+        ID** p = &((*table)->id_right);
+        addIdToTable(newId, p);
     } else {
         // Error
         printf("Error - symbol %s defined twice in the same scope", newId->id_name);
+        // TODO - Exit or something here probably
     }
 }
 
@@ -155,6 +184,11 @@ void printIdTree(ID* tree) {
 
     // Print right side now
     printIdTree(tree->id_right);
+}
+
+void scopePrint(int s) {
+    printf("Printing symbol table at scope level %i:\n", s);
+    printIdTree(scope[s]);
 }
 
 // Everybody loves global variables

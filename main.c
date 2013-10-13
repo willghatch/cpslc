@@ -18,7 +18,7 @@ int main(int argc, char **argv)
     yyin = infile;
 
     // Initialize symbol table
-    typeinit();
+    symtabInit();
     ++currscope;
 
     // Print out some help stuff...
@@ -29,9 +29,14 @@ int main(int argc, char **argv)
 
     // Parse stuff!
     yyparse();
+    scopePrint(currscope);
+    --currscope;
+    scopePrint(currscope);
 
     // If it reaches this line without breaking and exiting, we're good.
     printf("File parsed without error.\n");
+
+    
 
     return 0;
 }

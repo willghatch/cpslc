@@ -51,6 +51,8 @@ enum identifier_kind {Constant, Type, Variable, RParameter, VParameter,
                        Field, Procedure, Function};
 
 
+typedef struct expression_struct expr;
+struct expression_struct;
 
 // So these have built-in pointers to make a tree.
 // I'm not sure how I feel about that, but I'll roll with it.
@@ -65,21 +67,23 @@ struct id_info
 	// id_left and id_right is for a tree of ID's for the symbol table...
 	ID *id_next;
 	// id_next is for a linked list of ID's for a record type...
-	int id_value;
+	//int id_value; // I have no idea what this is supposed to be
+	expr* const_expr;
  }; /* id_info */
 
 
 // prototypes...
 TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *elem_type, char* name);
-void typeinit (void);
 char* getTypeName(TYPE* type);
 char* getIdKindName(ID_KIND kind);
 ID *newid (char *name);
 ID *search (char *name, ID *table);
-void addIdToTable(ID* newId, ID* table);
 void freeIdTree(ID* tree);
 void printTypeInfo(TYPE* type);
 void printIdTree(ID* tree);
+void scopePrint(int s);
+void symtabInit(void);
+void addIdToTable(ID* newId, ID** table);
 
 
 

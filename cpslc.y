@@ -11,6 +11,7 @@ int yylex(void);
 
 %code requires {
 #include"expression.h"
+#include"slist.h"
 }
 
 %union{
@@ -112,8 +113,14 @@ subConstantDeclPlus:
     | subConstantDecl
     ;
 subConstantDecl:
-    identifier EQUALSYM expression SEMICOLONSYM
-    /* TODO - put ident in table, but calculating the value and type of expr /*
+    identifier EQUALSYM expression SEMICOLONSYM {
+        ID* id; 
+        id = newid($1); 
+        id->id_type = $3->type; 
+        id->id_kind = Constant; 
+        id->const_expr = $3;
+        addIdToTable(id, scope+currscope);
+    }
     ;
 
 /* Procedure and Function Declarations */
@@ -148,7 +155,6 @@ varMaybe:
     ;
 body:
     constantDeclMaybe typeDeclMaybe varDeclMaybe block
-    { printf("In Body\n");}
     ;
 block:
     BEGINSYM statementSequence ENDSYM
