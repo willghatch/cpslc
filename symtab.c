@@ -47,6 +47,14 @@ void typeinit (void)
 	undef_type = typecreate(NOSIZE, UndefinedType, NULL, NULL, "undefinded");
 } /* typeinit */
 
+ID* mkBoolId(char* name, expr* expression) {
+    ID* boolid = newID(name);
+    boolid->id_kind = Constant_id;
+    boolid->id_type = bool_type;
+    boolid->const_expr = expression;
+    return boolid;
+}
+
 void symtabInit(void) {
     typeinit();
     // Initialize pre-defined level of symbol table
@@ -60,8 +68,18 @@ void symtabInit(void) {
     addIdToTable_noAddrMove(typeIdCreate(str_type, "string"), s);
     addIdToTable_noAddrMove(typeIdCreate(str_type, "STRING"), s);
     
-    // TODO - add true and false (upper and lower) to table
+    // add true and false (upper and lower) to table
+    expr* trueexpr = newBoolExpr(true);
+    expr* falseexpr = newBoolExpr(false);
 
+    ID* boolid = mkBoolId("true", trueexpr);
+    addIdToTable_noAddrMove(boolid, s);
+    boolid = mkBoolId("TRUE", trueexpr);
+    addIdToTable_noAddrMove(boolid, s);
+    boolid = mkBoolId("false", falseexpr);
+    addIdToTable_noAddrMove(falseid, s);
+    boolid = mkBoolId("FALSE", falseexpr);
+    addIdToTable_noAddrMove(boolid, s);
 }
 
 char* getTypeName(TYPE* type) {

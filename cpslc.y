@@ -410,7 +410,10 @@ commaLValueStar:
     | /* empty */ %prec EMPTY
     ;
 writeStatement:
-    WRITESYM LPARENSYM expression commaExpressionStar RPARENSYM
+    WRITESYM LPARENSYM expressionList RPARENSYM
+    ;
+expressionList:
+    expression commaExpressionStar
     ;
 commaExpressionStar:
     COMMASYM expression commaExpressionStar
@@ -420,7 +423,7 @@ procedureCall:
     identifier LPARENSYM maybeExpressionsWithCommas RPARENSYM
     ;
 maybeExpressionsWithCommas:
-    expression commaExpressionStar
+    expressionList
     | /* empty */ %prec EMPTY
     ;
 nullStatement:

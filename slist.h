@@ -16,6 +16,19 @@ struct slist_struct {
 
 
 slist* mkSlist(void* datum);
+void freeSlist(slist* list);
+
+
+typedef struct htslist_struct htslist;
+struct htslist_struct {
+    slist* head;
+    slist* tail;
+};
+
+
+void hts_append(htslist* l, void* data);
+htslist* mkHtslist();
+
 
 #endif //SLIST_H
 
