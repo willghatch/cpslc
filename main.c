@@ -28,11 +28,11 @@ int main(int argc, char **argv)
 
     yyin = infile;
 
-    // Initialize symbol table
-    symtabInit();
-    pushScope();
+    // Initialize stuff
     init_registerState();
     mips_init();
+    symtabInit();
+    pushScope();
 
     // Print out some help stuff...
     printf("\nTo use, either specify a file as the first (and only) argument, or pipe the desired\n");

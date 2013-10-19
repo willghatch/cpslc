@@ -6,17 +6,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#define CONST_STR_LABEL "m_constStr"
-#define BRANCH_LABEL "m_branch"
-#define LOAD_CONST_STRLEN 50
-#define CONST_STRDEF_STRLEN 50
-#define OPERATOR_STRLEN 50
-
-#define SYSC_PRINT_INT 1
-#define SYSC_PRINT_STR 4
-#define SYSC_READ_INT 5
-#define SYSC_READ_STR 8
-#define SYSC_EXIT 10
 
 
 // These are all slists of strings
@@ -119,26 +108,26 @@ void m_load_constant(expr* e, int reg) {
         // Load immediate value in two steps - upper and lower 16 bits
         int n = e->int_val;
         o = malloc(LOAD_CONST_STRLEN*sizeof(char));
-        snprintf(o, LOAD_CONST_STRLEN, "lui $%i, %i\n", reg, upper16(n));
+        snprintf(o, LOAD_CONST_STRLEN, "lui $%i, %i #loadint upper\n", reg, upper16(n));
         m_add_text(o);
         o = malloc(LOAD_CONST_STRLEN*sizeof(char));
-        snprintf(o, LOAD_CONST_STRLEN, "andi $%i, $%i, %i\n", reg, reg, lower16(n));
+        snprintf(o, LOAD_CONST_STRLEN, "ori $%i, $%i, %i #loadint lower\n", reg, reg, lower16(n));
         m_add_text(o);
     } else if (e->type == char_type) {
         char c = e->char_val;
         o = malloc(LOAD_CONST_STRLEN*sizeof(char));
-        snprintf(o, LOAD_CONST_STRLEN, "lui $%i, %i\n", reg, c);
+        snprintf(o, LOAD_CONST_STRLEN, "li $%i, %i #loadchar\n", reg, c);
         m_add_text(o);
     } else if (e->type == bool_type) {
         int b = e->bool_val ? 1 : 0;
         o = malloc(LOAD_CONST_STRLEN*sizeof(char));
-        snprintf(o, LOAD_CONST_STRLEN, "lui $%i, %i\n", reg, b);
+        snprintf(o, LOAD_CONST_STRLEN, "li $%i, %i #loadbool\n", reg, b);
         m_add_text(o);
     } else if (e->type == str_type) {
         // Load the address of the constant string by its index
         int snum = e->str_const_index;
         o = malloc(LOAD_CONST_STRLEN*sizeof(char));
-        snprintf(o, LOAD_CONST_STRLEN, "la $%i, %s%i\n", reg, CONST_STR_LABEL, snum);
+        snprintf(o, LOAD_CONST_STRLEN, "la $%i, %s%i #loadstr\n", reg, CONST_STR_LABEL, snum);
         m_add_text(o);
     }
 }
@@ -207,11 +196,14 @@ void m_write_expr(expr* e) {
         m_write_int(evalExpr(e));
     } else if (e->type == str_type) {
         m_write_str_reg(evalExpr(e));
+    } else if (e->type == char_type) {
+        m_write_char(evalExpr(e));
     }
     // TODO - write other data
 }
 
 void m_write_str_index(int strIndex) {
+    m_add_text("#writing string\n");
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "la $a0, %s%i\n", CONST_STR_LABEL, strIndex);
@@ -223,6 +215,7 @@ void m_write_str_index(int strIndex) {
 }
 
 void m_write_str_reg(int reg) {
+    m_add_text("#writing string\n");
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "move $a0, $%i\n", reg);
@@ -234,6 +227,7 @@ void m_write_str_reg(int reg) {
 }
 
 void m_write_int(int reg) {
+    m_add_text("#writing int\n");
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "move $a0, $%i\n", reg);
@@ -244,10 +238,32 @@ void m_write_int(int reg) {
     m_add_text("syscall\n");
 }
 
-void m_write_char() {
+void m_write_char(int reg) {
+    m_add_text("#writing char\n");
+    // have a special pseudo-constant string label that's one character long (plus null terminator),
+    // load, modify, and print it every time for a character
+    char* o;
+    // get char label address
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "la $a0, %s\n", CHAR_PRINT_LABEL);
+    m_add_text(o);
+    // store 0 in space after char
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "sb $0, 1($a0)\n");
+    m_add_text(o);
+    // store character into char print label
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "sb $%i, 0($a0)\n", reg);
+    m_add_text(o);
+    // load print syscall
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $v0, %i\n", SYSC_PRINT_STR);
+    m_add_text(o);
+    m_add_text("syscall\n");
 }
 
 void m_write_bool() {
+    // write "true" or "false" on 1 or 0...
 }
 
 void m_writeExpressionList(slist* ls) {
@@ -268,6 +284,8 @@ void m_write_file(char* file) {
 
     // write data section
     fprintf(f, "\n.data\n");
+    // add special character printing string
+    fprintf(f, "%s:\n\t.space 2\n", CHAR_PRINT_LABEL);
     slist* ls = m_data->head;
     while(ls != NULL) {
         fprintf(f, ls->data);
@@ -281,6 +299,8 @@ void m_write_file(char* file) {
         fprintf(f, ls->data);
         ls = ls->next;
     }
+
+    fprintf(f, "li $v0 10\nsyscall\n");
 
     // add gratuitous newlines.  I like it that way.
     fprintf(f, "\n\n");

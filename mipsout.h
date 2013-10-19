@@ -6,6 +6,20 @@
 #include "slist.h"
 #include "expression.h"
 
+
+#define CONST_STR_LABEL "m_constStr"
+#define BRANCH_LABEL "m_branch"
+#define LOAD_CONST_STRLEN 50
+#define CONST_STRDEF_STRLEN 50
+#define OPERATOR_STRLEN 50
+#define CHAR_PRINT_LABEL "m_charprint"
+
+#define SYSC_PRINT_INT 1
+#define SYSC_PRINT_STR 4
+#define SYSC_READ_INT 5
+#define SYSC_READ_STR 8
+#define SYSC_EXIT 10
+
 void mips_init();
 void m_add_data(char* str);
 void m_add_text(char* str);
@@ -27,6 +41,7 @@ void m_bin_op_to_r3(char* opstr, int r1, int r2, int r3);
 void m_write_str_index(int strIndex);
 void m_write_str_reg(int reg);
 void m_write_int(int reg);
+void m_write_char(int reg);
 void m_write_expr(expr* e);
 void m_writeExpressionList(slist* ls);
 void m_add_main_label();

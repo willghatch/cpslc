@@ -69,17 +69,20 @@ void symtabInit(void) {
     addIdToTable_noAddrMove(typeIdCreate(str_type, "STRING"), s);
     
     // add true and false (upper and lower) to table
-    expr* trueexpr = newBoolExpr(1);
-    expr* falseexpr = newBoolExpr(0);
+    true_expr = newBoolExpr(1);
+    false_expr = newBoolExpr(0);
 
-    ID* boolid = mkBoolId("true", trueexpr);
+    ID* boolid = mkBoolId("true", true_expr);
     addIdToTable_noAddrMove(boolid, s);
-    boolid = mkBoolId("TRUE", trueexpr);
+    boolid = mkBoolId("TRUE", true_expr);
     addIdToTable_noAddrMove(boolid, s);
-    boolid = mkBoolId("false", falseexpr);
+    boolid = mkBoolId("false", false_expr);
     addIdToTable_noAddrMove(boolid, s);
-    boolid = mkBoolId("FALSE", falseexpr);
+    boolid = mkBoolId("FALSE", false_expr);
     addIdToTable_noAddrMove(boolid, s);
+    
+    false_str_expr = newStrExpr("false");
+    true_str_expr = newStrExpr("true");
 }
 
 char* getTypeName(TYPE* type) {
@@ -292,4 +295,9 @@ TYPE *int_type, *bool_type, *char_type, *str_type, *undef_type;
 int scopeAddr [SCOPEDEPTH] = {0,0,0}; // TODO - Ok, ideally I should initialize
     // this in a loop in case the scope depth changes... but for now... bleh.
 int verbosity = 0;
+expr* true_expr;
+expr* false_expr;
+expr* true_str_expr;
+expr* false_str_expr;
+
 

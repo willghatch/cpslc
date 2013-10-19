@@ -97,6 +97,11 @@ extern int currscope;
 extern TYPE *int_type, *bool_type, *char_type, *str_type, *undef_type;
 extern int scopeAddr [SCOPEDEPTH];
 extern int verbosity;
+extern expr* true_expr;
+extern expr* false_expr;
+extern expr* true_str_expr;
+extern expr* false_str_expr;
+
 
 #endif /*SYMTAB_H*/
 

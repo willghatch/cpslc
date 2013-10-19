@@ -452,9 +452,9 @@ nullStatement:
 /* Expressions */
 expression:
     unaryOp expression
-        {$$ = newUnOpExpr($1, $2);} /* TODO - fix*/
+        {$$ = newUnOpExpr($1, $2);}
     | expression binaryOp expression
-        {$$ = newBinOpExpr($2, $1, $3);} /* TODO - fix*/
+        {$$ = newBinOpExpr($2, $1, $3);}
     | LPARENSYM expression RPARENSYM
         {$$ = $2;}
     | procedureCall

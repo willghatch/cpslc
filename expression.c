@@ -60,6 +60,30 @@ expr* newBinOpExpr(openum op, expr* e1, expr* e2) {
     e->edata.opdata.op = op;
     e->edata.opdata.operand1 = e1;
     e->edata.opdata.operand2 = e2;
+    switch(op) {
+        case op_and: 
+        case op_or:
+        case op_not:
+        case op_equal:
+        case op_nequal:
+        case op_gt:
+        case op_lt:
+        case op_gte:
+        case op_lte:
+            e->type = bool_type;
+            break;
+        case op_negate:
+        case op_add:
+        case op_sub:
+        case op_mult:
+        case op_div:
+        case op_mod:
+            e->type = int_type;
+            break;
+        default:
+            //yyerror("unknown operator in expression creation... dying...");
+            break;
+    }
     return e;
 }
 
