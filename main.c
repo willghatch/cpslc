@@ -3,6 +3,8 @@
 #include <string.h>
 #include "symtab.h"
 #include "parser.h"
+#include "register.h"
+#include "mipsout.h"
 
 //extern union yylvalUnion yylval;
 extern FILE *yyin;
@@ -29,6 +31,8 @@ int main(int argc, char **argv)
     // Initialize symbol table
     symtabInit();
     pushScope();
+    clear_regstate(registerState);
+    mips_init();
 
     // Print out some help stuff...
     printf("\nTo use, either specify a file as the first (and only) argument, or pipe the desired\n");

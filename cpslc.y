@@ -29,6 +29,7 @@ void popScope();
     slist* list_ptr;
     ID* ID_val;
     TYPE* type_val;
+    openum op_val;
 }
 /* give verbose errors */
 %error-verbose
@@ -84,6 +85,8 @@ void popScope();
 %token            WRITESYM 
 
 %type <expr_val>  expression
+%type <op_val>  binaryOp
+%type <op_val>  unaryOp
 %type <str_val>   identifier 
 %type <type_val>    type
 %type <list_ptr>  identListsOfTypeStar
@@ -433,11 +436,11 @@ nullStatement:
 /* Expressions */
 expression:
     unaryOp expression
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = newUnOpExpr($1, $2);} /* TODO - fix*/
     | expression binaryOp expression
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = newBinOpExpr($2, $1, $3);} /* TODO - fix*/
     | LPARENSYM expression RPARENSYM
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = $2;}
     | procedureCall
         {$$ = NULL;} /* TODO - fix*/
     | CHRSYM LPARENSYM expression RPARENSYM
@@ -469,22 +472,37 @@ expression:
     ;
 unaryOp:
     TILDESYM
+        {$$ = op_not;}
     | MINUSSYM %prec UNARYMINUS
+        {$$ = op_negate;}
     ;
 binaryOp:
     PIPESYM 
+        {$$ = op_or;}
     | AMPERSANDSYM 
+        {$$ = op_and;}
     | EQUALSYM 
+        {$$ = op_equal;}
     | NEQUALSYM 
+        {$$ = op_nequal;}
     | LTESYM 
+        {$$ = op_lte;}
     | GTESYM 
+        {$$ = op_gte;}
     | LTSYM 
+        {$$ = op_lt;}
     | GTSYM 
+        {$$ = op_gt;}
     | PLUSSYM 
+        {$$ = op_add;}
     | MINUSSYM 
+        {$$ = op_sub;}
     | STARSYM 
+        {$$ = op_mult;}
     | SLASHSYM 
+        {$$ = op_div;}
     | PERCENTSYM 
+        {$$ = op_mod;}
     ;
 lValue:
     identifier dotIdentOrExpStar {

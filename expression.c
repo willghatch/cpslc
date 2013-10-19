@@ -3,6 +3,8 @@
 #include "symtab.h"
 #include "expression.h"
 #include <stdlib.h>
+#include "register.h"
+#include "mipsout.h"
 
 expr* newNumExpr(int val) {
     expr* e;
@@ -28,6 +30,8 @@ expr* newStrExpr(char* val) {
     e->type = str_type;
     e->kind = constant_expr;
     e->str_val = val;
+    e->str_const_index = str_const_index;
+    m_add_string_constant(val);
     return e;
 }
 
@@ -49,39 +53,106 @@ expr* newRegExpr(int reg, TYPE* type) {
     return e;
 }
 
+expr* newBinOpExpr(openum op, expr* e1, expr* e2) {
+    expr* e;
+    e = malloc(sizeof(expr));
+    e->kind = operation_bin;
+    e->edata.opdata.op = op;
+    e->edata.opdata.operand1 = e1;
+    e->edata.opdata.operand2 = e2;
+    return e;
+}
 
-char* strdup_mips_escaped(char* str) {
-// strdup, only it escapes \n and \t characters that spim handles
-    char* newstr;
-    int len = strlen(str);
-    int numEsc = 0;
-    for(int i = 0; i < len; ++i) {
-        switch(str[i]) {
-            case '\n':
-            case '\t':
-            // It seems spim only handles these two escape sequences.
-                ++numEsc;
-                break;
-            default:
-                break;
-        }
+expr* newUnOpExpr(openum op, expr* e1) {
+    expr* e;
+    e = newBinOpExpr(op, e1, NULL);
+    e->kind = operation_un;
+    return e;
+}
+
+int evalExpr(expr* e) {
+// returns a register number for the register that the output will be in
+// TODO - do I want to free the expression here?  Not that I care about memory leaks much in this.
+    int reg = -1;
+    switch(e->kind) {
+        case constant_expr:
+            reg = getReg(registerState);
+            m_load_constant(e, reg);
+            break;
+        case operation_bin:
+            reg = doBinaryOperator(e->edata.opdata.op, e->edata.opdata.operand1, e->edata.opdata.operand2);
+            break;
+        case operation_un:
+            reg = doUnaryOperator(e->edata.opdata.op, e->edata.opdata.operand1)
+            break;
+        default:
+            break;
     }
-    newstr = malloc((len + numEsc) * sizeof(char));
+    return reg;
+}
 
-    int nsi = 0; // new string i
-    for(int i = 0; i < len; ++i) {
-        switch(str[i]) {
-            case '\n':
-                newstr[nsi++] = '\\';
-                newstr[nsi++] = 'n';
-            case '\t':
-                newstr[nsi++] = '\\';
-                newstr[nsi++] = 't';
-            default:
-                newstr[nsi++] = str[i];
-
-        }
+int doBinaryOperator(openum op, expr* operand1, expr* operand2) {
+    int reg1 = evalExpr(operand1);
+    int reg2 = evalExpr(operand2);
+    switch(op) {
+    // Append a string to the mips output list to do the operation.
+        case op_and:
+            m_bin_op_to_r1("and", reg1, reg2);
+            freeReg(registerState, reg2);
+            break;
+        case op_or: 
+            m_bin_op_to_r1("or", reg1, reg2);
+            freeReg(registerState, reg2);
+            break;
+        case op_add: 
+            m_bin_op_to_r1("add", reg1, reg2);
+            freeReg(registerState, reg2);
+            break;
+        case op_sub: 
+            m_bin_op_to_r1("sub", reg1, reg2);
+            freeReg(registerState, reg2);
+            break;
+        case op_mult: 
+            m_mult_op(reg1, reg2, reg1);
+            freeReg(registerState, reg2);
+            break;
+        case op_div: 
+            m_divide_op(reg1, reg2, reg1);
+            freeReg(registerState, reg2);
+            break;
+        case op_mod: 
+            m_modulo_op(reg1, reg2, reg1);
+            freeReg(registerState, reg2);
+            break;
+        case op_equal: 
+            // TODO - implement these.
+            // I need to use branch statements I think... 
+            break;
+        case op_nequal: 
+            break;
+        case op_gt: 
+            break;
+        case op_lt: 
+            break;
+        case op_gte: 
+            break;
+        case op_lte:
+            break;
     }
-    return newstr;
+    return reg1;
+}
+
+int doUnaryOperator(openum op, expr* operand) {
+    int reg1 = evalExpr(operand1);
+    switch(op) {
+    // Append a string to the mips output list to do the operation.
+        case op_not: 
+            m_not(reg1, reg1);
+            break;
+        case op_negate: 
+            m_negate(reg1, reg1);
+            break;
+    }
+    return reg1;
 }
 
