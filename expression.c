@@ -30,17 +30,17 @@ expr* newStrExpr(char* val) {
     e->type = str_type;
     e->kind = constant_expr;
     e->str_val = val;
-    e->str_const_index = str_const_index;
+    e->str_const_index = strConstIndex;
     m_add_string_constant(val);
     return e;
 }
 
-expr* newBoolExpr(bool val) {
+expr* newBoolExpr(int val) {
     expr* e;
     e = malloc(sizeof(expr));
     e->type = bool_type;
     e->kind = constant_expr;
-    e->str_val = val;
+    e->bool_val = val;
     return e;
 }
 
@@ -83,7 +83,7 @@ int evalExpr(expr* e) {
             reg = doBinaryOperator(e->edata.opdata.op, e->edata.opdata.operand1, e->edata.opdata.operand2);
             break;
         case operation_un:
-            reg = doUnaryOperator(e->edata.opdata.op, e->edata.opdata.operand1)
+            reg = doUnaryOperator(e->edata.opdata.op, e->edata.opdata.operand1);
             break;
         default:
             break;
@@ -143,7 +143,7 @@ int doBinaryOperator(openum op, expr* operand1, expr* operand2) {
 }
 
 int doUnaryOperator(openum op, expr* operand) {
-    int reg1 = evalExpr(operand1);
+    int reg1 = evalExpr(operand);
     switch(op) {
     // Append a string to the mips output list to do the operation.
         case op_not: 

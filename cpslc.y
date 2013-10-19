@@ -14,6 +14,7 @@ int yylex(void);
 #include"symtab.h"
 #include"slist.h"
 #include"typedidentlist.h"
+#include"mipsout.h"
 
 void addVarsOfType(slist* idents, TYPE* type);
 void pushScope();
@@ -85,6 +86,9 @@ void popScope();
 %token            WRITESYM 
 
 %type <expr_val>  expression
+%type <list_ptr> expressionList
+%type <list_ptr> commaExpressionStar
+%type <list_ptr> maybeExpressionsWithCommas
 %type <op_val>  binaryOp
 %type <op_val>  unaryOp
 %type <str_val>   identifier 
@@ -109,7 +113,7 @@ void popScope();
 
 %%
 program:
-    constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDeclStar block endPeriod
+    constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDeclStar {m_add_main_label();} block endPeriod
     ;
 endPeriod:
     PERIODSYM
@@ -414,20 +418,32 @@ commaLValueStar:
     ;
 writeStatement:
     WRITESYM LPARENSYM expressionList RPARENSYM
+        {m_writeExpressionList($3);}
     ;
 expressionList:
-    expression commaExpressionStar
+    expression commaExpressionStar {
+        slist* ls = mkSlist($1);
+        ls->next = $2;
+        $$ = ls;
+    }
     ;
 commaExpressionStar:
-    COMMASYM expression commaExpressionStar
+    COMMASYM expression commaExpressionStar {
+        slist* ls = mkSlist($2);
+        ls->next = $3;
+        $$ = ls;
+    }
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 procedureCall:
     identifier LPARENSYM maybeExpressionsWithCommas RPARENSYM
     ;
 maybeExpressionsWithCommas:
     expressionList
+        {$$ = $1;}
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 nullStatement:
     /* empty */ %prec EMPTY
@@ -557,4 +573,5 @@ void popScope() {
     scope[currscope] = NULL;
     --currscope;
 }
+
 

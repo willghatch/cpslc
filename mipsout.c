@@ -1,6 +1,10 @@
 
+#include "mipsout.h"
 #include "slist.h"
 #include "expression.h"
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #define CONST_STR_LABEL "m_constStr"
 #define BRANCH_LABEL "m_branch"
@@ -18,7 +22,6 @@
 // These are all slists of strings
 htslist* m_data;
 htslist* m_text;
-htslist* m_main;
 
 int strConstIndex = 0;
 int branchLabelIndex = 0;
@@ -26,7 +29,6 @@ int branchLabelIndex = 0;
 void mips_init() {
     m_data = mkHtslist();
     m_text = mkHtslist();
-    m_main = mkHtslist();
 }
 
 
@@ -38,20 +40,12 @@ void m_add_text(char* str) {
     hts_append(m_text, str);
 }
 
-void m_add_main(char* str) {
-    hts_append(m_main, str);
-}
-
 slist* m_get_data() {
     return m_data->head;
 }
 
 slist* m_get_text() {
     return m_text->head;
-}
-
-slist* m_get_main() {
-    return m_main->head;
 }
 
 int upper16(int n) {
@@ -89,14 +83,18 @@ char* strdup_mips_escaped(char* str) {
             case '\n':
                 newstr[nsi++] = '\\';
                 newstr[nsi++] = 'n';
+                break;
             case '\t':
                 newstr[nsi++] = '\\';
                 newstr[nsi++] = 't';
+                break;
             case '\"':
                 newstr[nsi++] = '\\';
                 newstr[nsi++] = '\"';
+                break;
             default:
                 newstr[nsi++] = str[i];
+                break;
 
         }
     }
@@ -104,7 +102,6 @@ char* strdup_mips_escaped(char* str) {
 }
 
 void m_add_string_constant(char* str) {
-    m_add_data(CONST_STR_LABEL);
     char* o = malloc(CONST_STRDEF_STRLEN*sizeof(char));
     snprintf(o, CONST_STRDEF_STRLEN, "%s%i:\n\t.asciiz \"", CONST_STR_LABEL, strConstIndex);
     m_add_data(o);
@@ -141,7 +138,7 @@ void m_load_constant(expr* e, int reg) {
         // Load the address of the constant string by its index
         int snum = e->str_const_index;
         o = malloc(LOAD_CONST_STRLEN*sizeof(char));
-        snprintf(o, LOAD_CONST_STRLEN, "la $%i, %s%i\n", reg, CONST_STR_LABEL, b);
+        snprintf(o, LOAD_CONST_STRLEN, "la $%i, %s%i\n", reg, CONST_STR_LABEL, snum);
         m_add_text(o);
     }
 }
@@ -205,11 +202,11 @@ void m_negate(int dest, int src) {
 // need to write strings, ints, chars, and bools
 // use syscall...
 
-void write_expr(expr* e) {
+void m_write_expr(expr* e) {
     if (e->type == int_type) {
         m_write_int(evalExpr(e));
     } else if (e->type == str_type) {
-        m_write_str(evalExpr(e));
+        m_write_str_reg(evalExpr(e));
     }
     // TODO - write other data
 }
@@ -231,7 +228,7 @@ void m_write_str_reg(int reg) {
     snprintf(o, OPERATOR_STRLEN, "move $a0, $%i\n", reg);
     m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "li $v0, $%i\n", SYSC_PRINT_STR);
+    snprintf(o, OPERATOR_STRLEN, "li $v0, %i\n", SYSC_PRINT_STR);
     m_add_text(o);
     m_add_text("syscall\n");
 }
@@ -239,10 +236,10 @@ void m_write_str_reg(int reg) {
 void m_write_int(int reg) {
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "or $a0, $0, $%i\n", reg);
+    snprintf(o, OPERATOR_STRLEN, "move $a0, $%i\n", reg);
     m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "li $v0, $%i\n", SYSC_PRINT_INT);
+    snprintf(o, OPERATOR_STRLEN, "li $v0, %i\n", SYSC_PRINT_INT);
     m_add_text(o);
     m_add_text("syscall\n");
 }
@@ -251,5 +248,43 @@ void m_write_char() {
 }
 
 void m_write_bool() {
+}
+
+void m_writeExpressionList(slist* ls) {
+    if (ls == NULL) {
+        return;
+    }
+    m_write_expr(ls->data);
+    m_writeExpressionList(ls->next);
+}
+
+void m_add_main_label() {
+    m_add_text("\nmain:\n");
+}
+
+void m_write_file(char* file) {
+    FILE* f = fopen(file, "w");
+    fprintf(f, "\n#File written by the (not so) amazing cpslc written by William Hatch\n");
+
+    // write data section
+    fprintf(f, "\n.data\n");
+    slist* ls = m_data->head;
+    while(ls != NULL) {
+        fprintf(f, ls->data);
+        ls = ls->next;
+    }
+
+    // write text section
+    fprintf(f, "\n.text\n");
+    ls = m_text->head;
+    while(ls != NULL) {
+        fprintf(f, ls->data);
+        ls = ls->next;
+    }
+
+    // add gratuitous newlines.  I like it that way.
+    fprintf(f, "\n\n");
+
+    fclose(f);
 }
 

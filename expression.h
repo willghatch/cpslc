@@ -6,11 +6,12 @@
 
 #include"symtab.h"
 
+typedef enum operator_enum openum;
 enum operator_enum {
     op_and, op_or, op_not, 
     op_negate, op_add, op_sub, op_mult, op_div, op_mod, 
     op_equal, op_nequal, op_gt, op_lt, op_gte, op_lte
-}
+};
 
 typedef enum expr_kind_enum expr_kind;
 enum expr_kind_enum {
@@ -23,16 +24,16 @@ struct expression_struct {
     expr_kind kind;
     int int_val;
     char char_val;
-    bool bool_val;
+    int bool_val;
     char* str_val;
     // I should have some way to hold the value of generic types... but when
     // they're not constant I'll have to have part of the parse tree or something...
     int str_const_index; // index in the list of string constants
     int reg_number;
     union {
-        int int_val;
-        char char_val;
-        bool bool_val;
+        //int int_val;
+        //char char_val;
+        //bool bool_val;
         struct {
             expr* operand1;
             expr* operand2;
@@ -49,9 +50,13 @@ struct expression_struct {
 expr* newNumExpr(int val);
 expr* newCharExpr(char val);
 expr* newStrExpr(char* val);
-expr* newBoolExpr(bool val);
+expr* newBoolExpr(int val);
 expr* newRegExpr(int reg, TYPE* type);
-int doOperator(enum operator_enum op, expr* operand1, expr* operand2);
+expr* newBinOpExpr(openum op, expr* e1, expr* e2);
+expr* newUnOpExpr(openum op, expr* e1);
+int evalExpr(expr* e);
+int doBinaryOperator(enum operator_enum op, expr* operand1, expr* operand2);
+int doUnaryOperator(enum operator_enum op, expr* operand1);
 
 #endif /* EXPRESSION_H_ */
 

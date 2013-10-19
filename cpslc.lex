@@ -128,7 +128,7 @@ write               {return(WRITESYM);}
     return(CHARACTERSYM);} 
 
   /* String Constants */
-\"([\040-\177])*\"  {yylval.str_val = strUnescape(yytext); return(STRINGSYM);} 
+\"(([\040-\041\043-\177])|(\\\"))*\"  {yylval.str_val = strUnescape(yytext); return(STRINGSYM);} 
 
   /* Comments */
 \$([^\n])*\n        {++yylineno;}

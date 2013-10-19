@@ -31,7 +31,7 @@ int main(int argc, char **argv)
     // Initialize symbol table
     symtabInit();
     pushScope();
-    clear_regstate(registerState);
+    init_registerState();
     mips_init();
 
     // Print out some help stuff...
@@ -50,6 +50,7 @@ int main(int argc, char **argv)
     // If it reaches this line without breaking and exiting, we're good.
     printf("File parsed without error.\n");
 
+    m_write_file("output.mips");
     
 
     return 0;

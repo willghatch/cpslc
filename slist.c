@@ -12,17 +12,17 @@ slist* mkSlist(void* datum) {
 }
 
 void freeSlist(slist* list) {
-    if (list == null) {
+    if (list == NULL) {
         return;
     }
     slist* n = list->next;
     free(list);
-    freeSlist(next);
+    freeSlist(n);
 }
 
 void hts_append(htslist* l, void* data) {
     slist* node = mkSlist(data);
-    if (l->head == null) {
+    if (l->head == NULL) {
         l->head = node;
         l->tail = node;
         return;
@@ -35,8 +35,8 @@ void hts_append(htslist* l, void* data) {
 htslist* mkHtslist() {
     htslist* l;
     l = malloc(sizeof(htslist));
-    l->head = null;
-    l->tail = null;
+    l->head = NULL;
+    l->tail = NULL;
     return l;
 }
 

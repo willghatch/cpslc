@@ -48,7 +48,7 @@ void typeinit (void)
 } /* typeinit */
 
 ID* mkBoolId(char* name, expr* expression) {
-    ID* boolid = newID(name);
+    ID* boolid = newid(name);
     boolid->id_kind = Constant_id;
     boolid->id_type = bool_type;
     boolid->const_expr = expression;
@@ -69,15 +69,15 @@ void symtabInit(void) {
     addIdToTable_noAddrMove(typeIdCreate(str_type, "STRING"), s);
     
     // add true and false (upper and lower) to table
-    expr* trueexpr = newBoolExpr(true);
-    expr* falseexpr = newBoolExpr(false);
+    expr* trueexpr = newBoolExpr(1);
+    expr* falseexpr = newBoolExpr(0);
 
     ID* boolid = mkBoolId("true", trueexpr);
     addIdToTable_noAddrMove(boolid, s);
     boolid = mkBoolId("TRUE", trueexpr);
     addIdToTable_noAddrMove(boolid, s);
     boolid = mkBoolId("false", falseexpr);
-    addIdToTable_noAddrMove(falseid, s);
+    addIdToTable_noAddrMove(boolid, s);
     boolid = mkBoolId("FALSE", falseexpr);
     addIdToTable_noAddrMove(boolid, s);
 }
