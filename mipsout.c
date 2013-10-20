@@ -478,7 +478,7 @@ void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest) {
     m_add_text(o);
     // LABELXA:
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s%iA:\n", opstr, r_dest, BRANCH_LABEL, bi);
+    snprintf(o, OPERATOR_STRLEN, "%s%iA:\n", BRANCH_LABEL, bi);
     m_add_text(o);
     // li <dest> 1 # true case
     o = malloc(OPERATOR_STRLEN*sizeof(char));
@@ -490,7 +490,7 @@ void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest) {
     m_add_text(o);
     // LABELXB:
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s%iB:\n", opstr, r_dest, BRANCH_LABEL, bi);
+    snprintf(o, OPERATOR_STRLEN, "%s%iB:\n", BRANCH_LABEL, bi);
     m_add_text(o);
     // li <dest> 0 # false case
     o = malloc(OPERATOR_STRLEN*sizeof(char));
@@ -498,7 +498,7 @@ void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest) {
     m_add_text(o);
     // LABELXC:
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s%iC:\n", opstr, r_dest, BRANCH_LABEL, bi);
+    snprintf(o, OPERATOR_STRLEN, "%s%iC:\n", BRANCH_LABEL, bi);
     m_add_text(o);
     // And now we continue with the operator return value in <dest>
 }
