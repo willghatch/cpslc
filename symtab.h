@@ -61,6 +61,9 @@ struct expression_struct;
 struct id_info
 {	char *id_name;
 	int id_addr;
+	int id_label; // For global vars, at least.  Maybe I can use it for more...
+	            // but at the moment, it's supplanting id_addr for globals, since I
+	            // can get them with a label.
 	int id_level;
 	TYPE *id_type;
 	ID_KIND id_kind;
@@ -88,6 +91,8 @@ void scopePrint(int s);
 void symtabInit(void);
 void addIdToTable_noAddrMove(ID* newId, ID** table);
 void addVarToCurTable(ID* var);
+void reserveGlobals();
+int isGlobal(ID* id);
 
 
 

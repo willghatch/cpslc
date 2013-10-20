@@ -13,6 +13,9 @@
 #define CONST_STRDEF_STRLEN 50
 #define OPERATOR_STRLEN 50
 #define CHAR_PRINT_LABEL "m_charprint"
+#define GLOBAL_VAR_LABEL "m_globalvar"
+#define STR_READ_LABEL "m_strRead"
+#define STR_READ_LEN 500
 
 #define SYSC_PRINT_INT 1
 #define SYSC_PRINT_STR 4
@@ -46,6 +49,11 @@ void m_write_expr(expr* e);
 void m_writeExpressionList(slist* ls);
 void m_add_main_label();
 void m_write_file(char* file);
+int m_reserve_global_var(int size);
+void m_load_global(int index, int reg);
+void m_read_int(int reg);
+void m_read_str(int reg, int size);
+void m_assign_int_global(int reg, int tempreg, int globalIndex);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

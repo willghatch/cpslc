@@ -9,6 +9,7 @@
 #include<stdio.h>
 #include"symtab.h"
 #include"expression.h"
+#include"mipsout.h"
 
 
 TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *elem_type, char* name)
@@ -286,6 +287,36 @@ void printIdTree(ID* tree) {
 void scopePrint(int s) {
     printf("Printing symbol table at scope level %i:\n", s);
     printIdTree(scope[s]);
+}
+
+void reserveGlobal(ID* gvar) {
+    int size = gvar->id_type->ty_size;
+    int reservation = m_reserve_global_var(size);
+    gvar->id_label = reservation;
+}
+
+void _reserveGlobals_recursive(ID* id) {
+    if (id == NULL) {
+        return;
+    }
+    _reserveGlobals_recursive(id->id_left);
+    if(id->id_kind == Variable && isGlobal(id)) {
+        reserveGlobal(id);
+    }
+    _reserveGlobals_recursive(id->id_right);
+}
+
+void reserveGlobals() {
+// output to mips the global variables.
+    _reserveGlobals_recursive(scope[0]);
+    _reserveGlobals_recursive(scope[1]);
+}
+
+int isGlobal(ID* id) {
+// returns 1 if global, 0 if not
+    if(id->id_level < 2)
+        return 1;
+    return 0;
 }
 
 // Everybody loves global variables

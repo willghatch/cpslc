@@ -14,6 +14,7 @@ htslist* m_text;
 
 int strConstIndex = 0;
 int branchLabelIndex = 0;
+int globalVarIndex = 0;
 
 void mips_init() {
     m_data = mkHtslist();
@@ -307,4 +308,60 @@ void m_write_file(char* file) {
 
     fclose(f);
 }
+
+int m_reserve_global_var(int size) {
+// print out a label for a global variable.  Return the label number.
+    int reservation = globalVarIndex++;
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%i:\n\t.space %i\n", GLOBAL_VAR_LABEL, reservation, size);
+    m_add_data(o);
+    return reservation;
+}
+
+void m_load_global(int index, int reg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n #load global", reg, GLOBAL_VAR_LABEL, index);
+    m_add_text(o);
+}
+
+void m_read_int(int reg) {
+    m_add_text("#reading int\n");
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $v0, %i\n", SYSC_READ_INT);
+    m_add_text(o);
+    m_add_text("syscall\n");
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "move $%i, $v0\n", reg);
+    m_add_text(o);
+}
+
+void m_read_str(int reg, int size) {
+    m_add_text("#reading string\n");
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $v0, %i\n", SYSC_READ_STR);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "move $a0, $%i\n", reg);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $a1, %i\n", size);
+    m_add_text(o);
+    m_add_text("syscall\n");
+}
+
+void m_assign_int_global(int reg, int tempreg, int globalIndex) {
+    m_add_text("#storing global\n");
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n", tempreg, GLOBAL_VAR_LABEL, globalIndex);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "sw $%i, $%i\n", reg, tempreg);
+    m_add_text(o);
+}
+
 

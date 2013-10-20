@@ -113,7 +113,7 @@ void popScope();
 
 %%
 program:
-    constantDeclMaybe typeDeclMaybe varDeclMaybe procOrFuncDeclStar {m_add_main_label();} block endPeriod
+    constantDeclMaybe typeDeclMaybe varDeclMaybe {reserveGlobals();} procOrFuncDeclStar {m_add_main_label();} block endPeriod
     ;
 endPeriod:
     PERIODSYM
