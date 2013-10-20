@@ -16,6 +16,8 @@
 #define GLOBAL_VAR_LABEL "m_globalvar"
 #define STR_READ_LABEL "m_strRead"
 #define STR_READ_LEN 500
+#define FALSE_STR_LABEL "m_false_str"
+#define TRUE_STR_LABEL "m_true_str"
 
 #define SYSC_PRINT_INT 1
 #define SYSC_PRINT_STR 4
@@ -45,6 +47,7 @@ void m_write_str_index(int strIndex);
 void m_write_str_reg(int reg);
 void m_write_int(int reg);
 void m_write_char(int reg);
+void m_write_bool(int reg);
 void m_write_expr(expr* e);
 void m_writeExpressionList(slist* ls);
 void m_add_main_label();
@@ -57,6 +60,7 @@ void m_read_str(int reg, int size);
 void m_assign_int_global(int reg, int globalIndex);
 void m_read_expr_int(ID* intvar);
 void m_readExpressionList(slist* ls);
+void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

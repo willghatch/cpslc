@@ -167,18 +167,28 @@ int doBinaryOperator(openum op, expr* operand1, expr* operand2) {
             freeReg(registerState, reg2);
             break;
         case op_equal: 
-            // TODO - implement these.
-            // I need to use branch statements I think... 
+            m_compare_mips_op("beq", reg1, reg2, reg1);
+            freeReg(registerState, reg2);
             break;
         case op_nequal: 
+            m_compare_mips_op("bne", reg1, reg2, reg1);
+            freeReg(registerState, reg2);
             break;
         case op_gt: 
+            m_compare_mips_op("bgtz", reg1, reg2, reg1);
+            freeReg(registerState, reg2);
             break;
         case op_lt: 
+            m_compare_mips_op("bltz", reg1, reg2, reg1);
+            freeReg(registerState, reg2);
             break;
         case op_gte: 
+            m_compare_mips_op("bgez", reg1, reg2, reg1);
+            freeReg(registerState, reg2);
             break;
         case op_lte:
+            m_compare_mips_op("blez", reg1, reg2, reg1);
+            freeReg(registerState, reg2);
             break;
     }
     return reg1;

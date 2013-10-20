@@ -208,8 +208,9 @@ void m_write_expr(expr* e) {
         m_write_str_reg(reg);
     } else if (e->type == char_type) {
         m_write_char(reg);
+    } else if (e->type == bool_type) {
+        m_write_bool(reg);
     }
-    // TODO - write other data
     freeReg(registerState, reg);
 }
 
@@ -273,8 +274,48 @@ void m_write_char(int reg) {
     m_add_text("syscall\n");
 }
 
-void m_write_bool() {
+void m_write_bool(int reg) {
     // write "true" or "false" on 1 or 0...
+    // bne <reg> $0 LABELXA
+    // b LABELXB
+    // LABELXA:
+    // la $a0 TRUESTR
+    // b LABELXC
+    // LABELXB:
+    // la $a0 FALSESTR
+    // LABELXC:
+    // li $v0 SYSC_PRINT_STR
+    // syscall
+    int bi = branchLabelIndex++;
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "bne $%i, $0 %s%iA\n", reg, BRANCH_LABEL, bi);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "b %s%iB\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%iA:\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "la $a0 %s\n", TRUE_STR_LABEL);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "b %s%iC\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%iB:\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "la $a0 %s\n", FALSE_STR_LABEL);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%iC:\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $v0 %i\n", SYSC_PRINT_STR);
+    m_add_text(o);
+    m_add_text("syscall\n");
 }
 
 void m_writeExpressionList(slist* ls) {
@@ -295,6 +336,9 @@ void m_write_file(char* file) {
 
     // write data section
     fprintf(f, "\n.data\n");
+    // add special strings for true, false
+    fprintf(f, "%s:\n\t.asciiz \"false\"\n", FALSE_STR_LABEL);
+    fprintf(f, "%s:\n\t.asciiz \"true\"\n", TRUE_STR_LABEL);
     // add special character printing string
     m_align();
     fprintf(f, "%s:\n\t.space 2\n", CHAR_PRINT_LABEL);
@@ -375,9 +419,9 @@ void m_read_str(int reg, int size) {
 void m_assign_int_global(int reg, int globalIndex) {
     m_add_text("#storing global\n");
     char* o;
-    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    //o = malloc(OPERATOR_STRLEN*sizeof(char));
     //snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n", tempreg, GLOBAL_VAR_LABEL, globalIndex);
-    m_add_text(o);
+    //m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "sw $%i, %s%i\n", reg, GLOBAL_VAR_LABEL, globalIndex);
     // TODO - allow an offset input.
@@ -413,4 +457,50 @@ void m_readExpressionList(slist* ls) {
     m_read_expr(ls->data);
     m_readExpressionList(ls->next);
 }
+
+void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest) {
+    m_add_text("#(in)equality comparison op\n");
+    int bi = branchLabelIndex++;
+    m_bin_op_to_r3("sub", r_l, r_r, r_dest);
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    // <branchop> # conditional branch based on desired operator to LABELXA
+    if(!strcmp(opstr, "beq") || !strcmp(opstr, "bne")) {
+    // beq and bne require a second register arg
+        snprintf(o, OPERATOR_STRLEN, "%s $%i $0 %s%iA\n", opstr, r_dest, BRANCH_LABEL, bi);
+    } else {
+        snprintf(o, OPERATOR_STRLEN, "%s $%i %s%iA\n", opstr, r_dest, BRANCH_LABEL, bi);
+    }
+    m_add_text(o);
+    // b LABELXB
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "b %s%iB\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    // LABELXA:
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%iA:\n", opstr, r_dest, BRANCH_LABEL, bi);
+    m_add_text(o);
+    // li <dest> 1 # true case
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $%i 1\n", r_dest);
+    m_add_text(o);
+    // b LABELXC
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "b %s%iC\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    // LABELXB:
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%iB:\n", opstr, r_dest, BRANCH_LABEL, bi);
+    m_add_text(o);
+    // li <dest> 0 # false case
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $%i 0\n", r_dest);
+    m_add_text(o);
+    // LABELXC:
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%iC:\n", opstr, r_dest, BRANCH_LABEL, bi);
+    m_add_text(o);
+    // And now we continue with the operator return value in <dest>
+}
+
 
