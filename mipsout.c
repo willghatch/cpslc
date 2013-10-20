@@ -2,6 +2,7 @@
 #include "mipsout.h"
 #include "slist.h"
 #include "expression.h"
+#include "register.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -91,7 +92,13 @@ char* strdup_mips_escaped(char* str) {
     return newstr;
 }
 
+void m_align() { 
+    // force alignment so spim doesn't yell
+    m_add_data("\t.align 2\n");
+}
+
 void m_add_string_constant(char* str) {
+    m_align();
     char* o = malloc(CONST_STRDEF_STRLEN*sizeof(char));
     snprintf(o, CONST_STRDEF_STRLEN, "%s%i:\n\t.asciiz \"", CONST_STR_LABEL, strConstIndex);
     m_add_data(o);
@@ -193,14 +200,17 @@ void m_negate(int dest, int src) {
 // use syscall...
 
 void m_write_expr(expr* e) {
+    int reg;
+    reg = evalExpr(e);
     if (e->type == int_type) {
-        m_write_int(evalExpr(e));
+        m_write_int(reg);
     } else if (e->type == str_type) {
-        m_write_str_reg(evalExpr(e));
+        m_write_str_reg(reg);
     } else if (e->type == char_type) {
-        m_write_char(evalExpr(e));
+        m_write_char(reg);
     }
     // TODO - write other data
+    freeReg(registerState, reg);
 }
 
 void m_write_str_index(int strIndex) {
@@ -286,6 +296,7 @@ void m_write_file(char* file) {
     // write data section
     fprintf(f, "\n.data\n");
     // add special character printing string
+    m_align();
     fprintf(f, "%s:\n\t.space 2\n", CHAR_PRINT_LABEL);
     slist* ls = m_data->head;
     while(ls != NULL) {
@@ -313,16 +324,24 @@ int m_reserve_global_var(int size) {
 // print out a label for a global variable.  Return the label number.
     int reservation = globalVarIndex++;
     char* o;
+    m_align();
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "%s%i:\n\t.space %i\n", GLOBAL_VAR_LABEL, reservation, size);
     m_add_data(o);
     return reservation;
 }
 
-void m_load_global(int index, int reg) {
+void m_load_global_address(int index, int reg) {
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n #load global", reg, GLOBAL_VAR_LABEL, index);
+    snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i #load global\n", reg, GLOBAL_VAR_LABEL, index);
+    m_add_text(o);
+}
+
+void m_load_global_int(int index, int reg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "lw $%i, %s%i #load global\n", reg, GLOBAL_VAR_LABEL, index);
     m_add_text(o);
 }
 
@@ -353,15 +372,45 @@ void m_read_str(int reg, int size) {
     m_add_text("syscall\n");
 }
 
-void m_assign_int_global(int reg, int tempreg, int globalIndex) {
+void m_assign_int_global(int reg, int globalIndex) {
     m_add_text("#storing global\n");
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n", tempreg, GLOBAL_VAR_LABEL, globalIndex);
+    //snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n", tempreg, GLOBAL_VAR_LABEL, globalIndex);
     m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "sw $%i, $%i\n", reg, tempreg);
+    snprintf(o, OPERATOR_STRLEN, "sw $%i, %s%i\n", reg, GLOBAL_VAR_LABEL, globalIndex);
+    // TODO - allow an offset input.
     m_add_text(o);
 }
 
+void m_read_expr_int(ID* intvar) {
+    //read syscall
+    //store
+    int reg;
+    reg = getReg(registerState);
+    m_read_int(reg);
+    if (isGlobal(intvar)) {
+        m_assign_int_global(reg, intvar->id_label);
+    } else {
+    // TODO - implement!
+    }
+
+    freeReg(registerState, reg);
+}
+
+void m_read_expr(expr* e) {
+    if (e->kind == globalVar) {
+        m_read_expr_int(e->edata.globalId);
+    }
+    // TODO - implement for other expressions than just global vars...
+}
+
+void m_readExpressionList(slist* ls) {
+    if (ls == NULL) {
+        return;
+    }
+    m_read_expr(ls->data);
+    m_readExpressionList(ls->next);
+}
 

@@ -53,6 +53,15 @@ expr* newRegExpr(int reg, TYPE* type) {
     return e;
 }
 
+expr* newGlobalVExpr(ID* id) {
+    expr* e;
+    e = malloc(sizeof(expr));
+    e->type = id->id_type;
+    e->kind = globalVar;
+    e->edata.globalId = id;
+    return e;
+}
+
 expr* newBinOpExpr(openum op, expr* e1, expr* e2) {
     expr* e;
     e = malloc(sizeof(expr));
@@ -97,6 +106,8 @@ expr* newUnOpExpr(openum op, expr* e1) {
 int evalExpr(expr* e) {
 // returns a register number for the register that the output will be in
 // TODO - do I want to free the expression here?  Not that I care about memory leaks much in this.
+// probably don't want to be too aggressive at freeing, because
+// there are some global expressions (true, false)
     int reg = -1;
     switch(e->kind) {
         case constant_expr:
@@ -108,6 +119,13 @@ int evalExpr(expr* e) {
             break;
         case operation_un:
             reg = doUnaryOperator(e->edata.opdata.op, e->edata.opdata.operand1);
+            break;
+        case globalVar:
+            reg = getReg(registerState);
+            if(e->edata.globalId->id_type == int_type) {
+                m_load_global_int(e->edata.globalId->id_label, reg);
+            }
+            // TODO - handle more types
             break;
         default:
             break;

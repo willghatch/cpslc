@@ -99,7 +99,9 @@ void popScope();
 %type <str_val>   simpleType
 %type <type_val>  recordType
 %type <type_val>  arrayType
-%type <str_val>   lValue /* TODO - fix this */
+%type <expr_val>   lValue 
+%type <list_ptr> commaedLValueList
+%type <list_ptr> commaLValueStar
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -410,11 +412,25 @@ expressionMaybe:
     | /* empty */ %prec EMPTY
     ;
 readStatement:
-    READSYM LPARENSYM lValue commaLValueStar RPARENSYM
+    READSYM LPARENSYM commaedLValueList RPARENSYM {
+        m_readExpressionList($3);
+    }
+    ;
+commaedLValueList:
+    lValue commaLValueStar {
+        slist* ls = mkSlist($1);
+        ls->next = $2;
+        $$ = ls;
+    }
     ;
 commaLValueStar:
-    COMMASYM lValue commaLValueStar
+    COMMASYM lValue commaLValueStar {
+        slist* ls = mkSlist($2);
+        ls->next = $3;
+        $$ = ls;
+    }
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 writeStatement:
     WRITESYM LPARENSYM expressionList RPARENSYM
@@ -467,18 +483,8 @@ expression:
         {$$ = NULL;} /* TODO - fix*/
     | SUCCSYM LPARENSYM expression RPARENSYM
         {$$ = NULL;} /* TODO - fix*/
-    | lValue {
-        // TODO - umm... do this right.
-        ID* id = scopeLookup($1);
-        if (id != NULL && id->id_kind == Constant_id) {
-            expr* e = id->const_expr;
-            if (e != NULL && e->kind == constant_expr) {
-                $$ = e;
-            }
-        } else {
-            $$ = NULL;
-        }
-    }
+    | lValue 
+        {$$ = $1;}
     | NUMERICALSYM
         {$$ = newNumExpr(yylval.int_val);}
     | CHARACTERSYM
@@ -522,8 +528,25 @@ binaryOp:
     ;
 lValue:
     identifier dotIdentOrExpStar {
-        // TODO - make this work for real
-        $$ = $1;
+        ID* id = scopeLookup($1);
+        if (id == NULL) {
+            yyerror("Error, trying to look up an identifier which doesn't seem to be declared");
+        }
+        // Constant case
+        if (id->id_kind == Constant_id) {
+            expr* e = id->const_expr;
+            if (e != NULL && e->kind == constant_expr) {
+                $$ = e;
+            }
+        } else if (id->id_kind == Variable && isGlobal(id)) {
+            // global var case
+            $$ = newGlobalVExpr(id);
+            // TODO - deal with offset from subelement access
+        }
+        else {
+            yyerror("It appears you're trying to use an lValue that's not yet supported.  Bummer!");
+            $$ = NULL; // although it will already exit from an error...
+        }
     }
     ;
 dotIdentOrExpStar:

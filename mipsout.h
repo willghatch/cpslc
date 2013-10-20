@@ -50,10 +50,13 @@ void m_writeExpressionList(slist* ls);
 void m_add_main_label();
 void m_write_file(char* file);
 int m_reserve_global_var(int size);
-void m_load_global(int index, int reg);
+void m_load_global_int(int index, int reg);
+void m_load_global_address(int index, int reg);
 void m_read_int(int reg);
 void m_read_str(int reg, int size);
-void m_assign_int_global(int reg, int tempreg, int globalIndex);
+void m_assign_int_global(int reg, int globalIndex);
+void m_read_expr_int(ID* intvar);
+void m_readExpressionList(slist* ls);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

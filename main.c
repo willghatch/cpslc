@@ -50,7 +50,7 @@ int main(int argc, char **argv)
     // If it reaches this line without breaking and exiting, we're good.
     printf("File parsed without error.\n");
 
-    m_write_file("output.mips");
+    m_write_file("output.asm");
     
 
     return 0;

@@ -41,6 +41,7 @@ struct expression_struct {
         } opdata;
         struct {
         } funcdata;
+        ID* globalId;
     } edata;
     
 };
@@ -54,6 +55,7 @@ expr* newBoolExpr(int val);
 expr* newRegExpr(int reg, TYPE* type);
 expr* newBinOpExpr(openum op, expr* e1, expr* e2);
 expr* newUnOpExpr(openum op, expr* e1);
+expr* newGlobalVExpr(ID* id);
 int evalExpr(expr* e);
 int doBinaryOperator(enum operator_enum op, expr* operand1, expr* operand2);
 int doUnaryOperator(enum operator_enum op, expr* operand1);
