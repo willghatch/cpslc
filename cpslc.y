@@ -5,6 +5,8 @@
 #include<stdlib.h>
 #include"symtab.h"
 #include"expression.h"
+#include"statement.h"
+#include"slist.h"
 int yyerror(const char *msg);
 int yylex(void);
 %}
@@ -14,6 +16,7 @@ int yylex(void);
 #include"symtab.h"
 #include"slist.h"
 #include"typedidentlist.h"
+#include"statement.h"
 #include"mipsout.h"
 
 void addVarsOfType(slist* idents, TYPE* type);
@@ -28,9 +31,13 @@ void popScope();
 
     expr* expr_val;
     slist* list_ptr;
+    htslist* htslist_ptr;
     ID* ID_val;
     TYPE* type_val;
     openum op_val;
+    statement* stmt_val;
+    conditional* cond_val;
+    inctype inctype_val;
 }
 /* give verbose errors */
 %error-verbose
@@ -102,6 +109,24 @@ void popScope();
 %type <expr_val>   lValue 
 %type <list_ptr> commaedLValueList
 %type <list_ptr> commaLValueStar
+%type <stmt_val> statement
+%type <stmt_val> assignment
+%type <stmt_val> ifStatement
+%type <stmt_val> whileStatement
+%type <stmt_val> repeatStatement
+%type <stmt_val> forStatement
+%type <stmt_val> stopStatement
+%type <stmt_val> returnStatement
+%type <stmt_val> readStatement
+%type <stmt_val> writeStatement
+%type <stmt_val> procedureCall
+%type <stmt_val> nullStatement
+%type <list_ptr> elseifStar
+%type <cond_val> elseMaybe
+%type <inctype_val> toOrDownto
+%type <htslist_ptr> statementSequence
+%type <expr_val> expressionMaybe
+%type <list_ptr> semicolonStatementStar
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -355,65 +380,128 @@ varDeclExt:
 
 /* Statements */
 statementSequence:
-    statement semicolonStatementStar
+    statement semicolonStatementStar {
+        htslist* ls = mkHtslist();
+        hts_append(ls, $1);
+        slist* starlist = $2;
+        while (starlist != NULL) {
+            hts_append(ls, starlist->data);
+            starlist = starlist->next;
+        }
+        freeSlist($2);
+        $$ = ls;
+    }
     ;
 semicolonStatementStar:
-    SEMICOLONSYM statement semicolonStatementStar
+    SEMICOLONSYM statement semicolonStatementStar {
+        slist* l = mkSlist($2);
+        l->next = $3;
+        $$ = l;
+    }
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 statement:
     assignment
+        {$$ = $1;}
     | ifStatement
+        {$$ = $1;}
     | whileStatement
+        {$$ = $1;}
     | repeatStatement
+        {$$ = $1;}
     | forStatement
+        {$$ = $1;}
     | stopStatement
+        {$$ = $1;}
     | returnStatement
+        {$$ = $1;}
     | readStatement
+        {$$ = $1;}
     | writeStatement
+        {$$ = $1;}
     | procedureCall
+        {$$ = $1;}
     | nullStatement
+        {$$ = $1;}
     ;
 assignment:
     lValue ASSIGNSYM expression
+        {$$ = mkAssignmentStmt($1, $3);}
     ;
 ifStatement:
-    IFSYM expression THENSYM statementSequence elseifStar elseMaybe ENDSYM
+    IFSYM expression THENSYM statementSequence elseifStar elseMaybe ENDSYM {
+        conditional* cond = mkConditional($2, bt_nequal0, $4);
+        htslist* conds = mkHtslist();
+        hts_append(conds, cond);
+        slist* elseifs = $5;
+        while (elseifs != NULL) {
+            hts_append(conds, elseifs->data);
+            elseifs = elseifs->next;
+        }
+        conditional* elsecond = $6;
+        if(elsecond != NULL) {
+            hts_append(conds, elsecond);
+        }
+        $$ = mkIfStmt(conds);
+    }
     ;
 elseifStar:
-    ELSEIFSYM expression THENSYM statementSequence elseifStar
+    ELSEIFSYM expression THENSYM statementSequence elseifStar {
+        conditional* c = mkConditional($2, bt_nequal0, $4);
+        slist* ls = mkSlist(c);
+        ls->next = $5;
+        $$ = ls;
+    }
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 elseMaybe:
     ELSESYM statementSequence
+        {$$ = mkConditional(NULL, bt_nequal0, $2);}
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 whileStatement:
-    WHILESYM expression DOSYM statementSequence ENDSYM
+    WHILESYM expression DOSYM statementSequence ENDSYM {
+        $$ = mkWhileStmt($2, $4);
+    }
     ;
 repeatStatement:
-    REPEATSYM statementSequence UNTILSYM expression
+    REPEATSYM statementSequence UNTILSYM expression {
+        $$ = mkRepeatStmt($4, $2);
+    }
     ;
 forStatement:
-    FORSYM identifier ASSIGNSYM expression toOrDownto expression DOSYM statementSequence ENDSYM
+    FORSYM assignment toOrDownto expression DOSYM statementSequence ENDSYM {
+        $$ = mkForStmt($2, $3, $4, $6);
+    }
     ;
 toOrDownto:
     TOSYM
+        {$$ = Increment;}
     | DOWNTOSYM
+        {$$ = Decrement;}
     ;
 stopStatement:
-    STOPSYM
+    STOPSYM {
+        $$ = mkStopStmt();
+    }
     ;
 returnStatement:
-    RETURNSYM expressionMaybe
+    RETURNSYM expressionMaybe {
+        $$ = NULL;  // TODO - fix this...
+    }
     ;
 expressionMaybe:
     expression
+        {$$ = $1;}
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 readStatement:
     READSYM LPARENSYM commaedLValueList RPARENSYM {
-        m_readExpressionList($3);
+        $$ = mkReadStmt($3);
     }
     ;
 commaedLValueList:
@@ -434,7 +522,7 @@ commaLValueStar:
     ;
 writeStatement:
     WRITESYM LPARENSYM expressionList RPARENSYM
-        {m_writeExpressionList($3);}
+        {$$ = mkWriteStmt($3);}
     ;
 expressionList:
     expression commaExpressionStar {
@@ -453,7 +541,9 @@ commaExpressionStar:
         {$$ = NULL;}
     ;
 procedureCall:
-    identifier LPARENSYM maybeExpressionsWithCommas RPARENSYM
+    identifier LPARENSYM maybeExpressionsWithCommas RPARENSYM {
+        $$ = NULL; // TODO - fix this...
+    }
     ;
 maybeExpressionsWithCommas:
     expressionList
@@ -463,6 +553,7 @@ maybeExpressionsWithCommas:
     ;
 nullStatement:
     /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 
 /* Expressions */

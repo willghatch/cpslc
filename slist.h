@@ -17,6 +17,7 @@ struct slist_struct {
 
 slist* mkSlist(void* datum);
 void freeSlist(slist* list);
+void slist_append(slist* ls, void* elem);
 
 
 typedef struct htslist_struct htslist;

@@ -31,9 +31,11 @@ struct expression_struct {
     int str_const_index; // index in the list of string constants
     int reg_number;
     union {
+        // TODO - move these values into the union.
         //int int_val;
         //char char_val;
         //bool bool_val;
+        //char* str_val;
         struct {
             expr* operand1;
             expr* operand2;
@@ -42,6 +44,7 @@ struct expression_struct {
         struct {
         } funcdata;
         ID* globalId;
+        int stackOffset;
     } edata;
     
 };

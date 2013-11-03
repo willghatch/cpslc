@@ -318,13 +318,6 @@ void m_write_bool(int reg) {
     m_add_text("syscall\n");
 }
 
-void m_writeExpressionList(slist* ls) {
-    if (ls == NULL) {
-        return;
-    }
-    m_write_expr(ls->data);
-    m_writeExpressionList(ls->next);
-}
 
 void m_add_main_label() {
     m_add_text("\nmain:\n");
@@ -450,13 +443,6 @@ void m_read_expr(expr* e) {
     // TODO - implement for other expressions than just global vars...
 }
 
-void m_readExpressionList(slist* ls) {
-    if (ls == NULL) {
-        return;
-    }
-    m_read_expr(ls->data);
-    m_readExpressionList(ls->next);
-}
 
 void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest) {
     m_add_text("#(in)equality comparison op\n");
@@ -501,6 +487,152 @@ void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest) {
     snprintf(o, OPERATOR_STRLEN, "%s%iC:\n", BRANCH_LABEL, bi);
     m_add_text(o);
     // And now we continue with the operator return value in <dest>
+}
+
+
+void m_write_labelled_stmts(int branchIndex, int subIndex, htslist* stmts, char* endGoto) {
+// writes statement blocks with a label (for loops, ifs)
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%i_%i:\n", BRANCH_LABEL, branchIndex, subIndex);
+    m_add_text(o);
+    eval_stmt_list(stmts);
+    if (endGoto != NULL) {
+        m_add_text(endGoto);
+    }
+}
+
+void m_write_if_branchblock(int branchIndex, slist* conditionals) {
+// Writes evaluation of conditions and branch statements for if statements
+    slist* l = conditionals;
+    char* o;
+    int subIndex = 0;
+    while (l != NULL) {
+        conditional* c = l->data;
+        if(c->condition == NULL) {
+            o = malloc(OPERATOR_STRLEN*sizeof(char));
+            snprintf(o, OPERATOR_STRLEN, "b %s%i_%i\n", BRANCH_LABEL, branchIndex, subIndex);
+            m_add_text(o);
+        } else {
+            int reg = evalExpr(c->condition);
+            char* bstr = c->branchType == bt_equal0 ? "beq" : "bne";
+            o = malloc(OPERATOR_STRLEN*sizeof(char));
+            snprintf(o, OPERATOR_STRLEN, "%s $%i $0 %s%i_%i\n", bstr, reg, BRANCH_LABEL, branchIndex, subIndex);
+            m_add_text(o);
+            freeReg(registerState, reg);
+        }
+
+        l = l->next;
+        ++subIndex;
+    }
+}
+
+
+//// Statement printing!
+
+void m_assign_stmt(expr* lval, expr* rval) {
+    if(lval->kind == globalVar && lval->type == int_type) {
+        int reg = evalExpr(rval);
+        int globalIndex = lval->edata.globalId->id_label;
+        m_assign_int_global(reg, globalIndex);
+    }
+    // TODO - deal with other lvalue types and kinds
+}
+
+void m_if_stmt(htslist* conditionals) {
+    m_add_text("#If Statement\n");
+    int bi = branchLabelIndex++;
+    // Write header (expression evaluations)
+    m_write_if_branchblock(bi, conditionals->head);
+    // Write blocks
+    slist* l = conditionals->head;
+    int ifElseIndex = 0;
+    char* endGoto = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(endGoto, OPERATOR_STRLEN, "b %s%i_end\n", BRANCH_LABEL, bi);
+    while(l != NULL) {
+        conditional* c = l->data;
+        m_write_labelled_stmts(bi, ifElseIndex, c->statements, endGoto);
+        ++ifElseIndex;
+    }
+    char* endLabel = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(endLabel, OPERATOR_STRLEN, "%s%i_end:\n", BRANCH_LABEL, bi);
+    m_add_text(endLabel);
+}
+
+void m_for_stmt(statement* init, conditional* c) {
+    m_add_text("#For Statement\n");
+    int bi = branchLabelIndex++;
+    // Put initializing statement
+    stmt_eval(init);
+    // Put condition label
+    char* o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%i_cond:\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    // Put conditional branch
+    int reg = evalExpr(c->condition);
+    char* bstr = c->branchType == bt_equal0 ? "beq" : "bne";
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s $%i $0 %s%i_0\n", bstr, reg);
+    m_add_text(o);
+    freeReg(registerState, reg);
+    // If the condition failed, branch to end
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "b %s%i_end\n", BRANCH_LABEL, bi);
+    m_add_text(o);
+    // Write block
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "b %s%i_cond\n", BRANCH_LABEL, bi);
+    m_write_labelled_stmts(bi, 0, c->statements, o);
+    // write end label
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%i_end:\n", BRANCH_LABEL, bi);
+}
+
+void m_while_stmt(conditional* c) {
+    m_add_text("#While Statement\n");
+    int bi = branchLabelIndex++;
+    // Just do a for statement...
+    m_for_stmt(NULL, c);
+}
+
+void m_repeat_stmt(conditional* c) {
+    m_add_text("#Repeat Statement\n");
+    int bi = branchLabelIndex++;
+
+    // Put statement block (labelled)
+    m_write_labelled_stmts(bi, 0, c->statements, NULL);
+    // Put conditional jump back
+    int reg = evalExpr(c->condition);
+    char* bstr = c->branchType == bt_equal0 ? "beq" : "bne";
+    char* o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s $%i $0 %s%i_0\n", bstr, reg, BRANCH_LABEL, bi);
+    m_add_text(o);
+    freeReg(registerState, reg);
+}
+
+void m_stop_stmt() {
+}
+
+void m_return_stmt() {
+}
+
+void m_read_stmt(slist* ls) {
+    if (ls == NULL) {
+        return;
+    }
+    m_read_expr(ls->data);
+    m_read_stmt(ls->next);
+}
+
+void m_write_stmt(slist* ls) {
+    if (ls == NULL) {
+        return;
+    }
+    m_write_expr(ls->data);
+    m_write_stmt(ls->next);
+}
+
+void m_proc_stmt() {
 }
 
 

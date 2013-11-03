@@ -82,8 +82,7 @@ void symtabInit(void) {
     boolid = mkBoolId("FALSE", false_expr);
     addIdToTable_noAddrMove(boolid, s);
     
-    false_str_expr = newStrExpr("false");
-    true_str_expr = newStrExpr("true");
+    one_expr = newNumExpr(1);
 }
 
 char* getTypeName(TYPE* type) {
@@ -330,5 +329,6 @@ expr* true_expr;
 expr* false_expr;
 expr* true_str_expr;
 expr* false_str_expr;
+expr* one_expr;
 
 

@@ -51,6 +51,10 @@ register.c: register.h
 register.o: register.c
 	$(CC) $(CFLAGS) register.c 
 
-cpslc: main.o lex.yy.o cpslc.tab.o symtab.o expression.o slist.o mipsout.o register.o 
-	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o expression.o symtab.o slist.o mipsout.o register.o 
+statement.c: statement.h
+statement.o: statement.c
+	$(CC) $(CFLAGS) statement.c 
+
+cpslc: main.o lex.yy.o cpslc.tab.o symtab.o expression.o slist.o mipsout.o register.o statement.o
+	$(CC) -o cpslc main.o lex.yy.o cpslc.tab.o expression.o symtab.o slist.o mipsout.o register.o statement.o
 

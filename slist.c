@@ -40,3 +40,13 @@ htslist* mkHtslist() {
     return l;
 }
 
+void slist_append(slist* ls, void* elem) {
+    if (ls == NULL) {
+        // error
+    } else if (ls->next == NULL) {
+        ls->next = mkSlist(elem);
+    } else {
+        slist_append(ls->next, elem);
+    }
+}
+

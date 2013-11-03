@@ -5,6 +5,7 @@
 
 #include "slist.h"
 #include "expression.h"
+#include "statement.h"
 
 
 #define CONST_STR_LABEL "m_constStr"
@@ -49,7 +50,6 @@ void m_write_int(int reg);
 void m_write_char(int reg);
 void m_write_bool(int reg);
 void m_write_expr(expr* e);
-void m_writeExpressionList(slist* ls);
 void m_add_main_label();
 void m_write_file(char* file);
 int m_reserve_global_var(int size);
@@ -59,8 +59,18 @@ void m_read_int(int reg);
 void m_read_str(int reg, int size);
 void m_assign_int_global(int reg, int globalIndex);
 void m_read_expr_int(ID* intvar);
-void m_readExpressionList(slist* ls);
 void m_compare_mips_op(char* opstr, int r_l, int r_r, int r_dest);
+// statement functions
+void m_assign_stmt(expr* lval, expr* rval);
+void m_if_stmt(htslist* conditionals);
+void m_for_stmt(statement* init, conditional* c);
+void m_while_stmt(conditional* c);
+void m_repeat_stmt(conditional* c);
+void m_stop_stmt();
+void m_return_stmt();
+void m_read_stmt(slist* ls);
+void m_write_stmt(slist* ls);
+void m_proc_stmt();
 
 extern int branchLabelIndex;
 extern int strConstIndex;
