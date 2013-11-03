@@ -553,6 +553,7 @@ void m_if_stmt(htslist* conditionals) {
         conditional* c = l->data;
         m_write_labelled_stmts(bi, ifElseIndex, c->statements, endGoto);
         ++ifElseIndex;
+        l = l->next;
     }
     char* endLabel = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(endLabel, OPERATOR_STRLEN, "%s%i_end:\n", BRANCH_LABEL, bi);
@@ -572,7 +573,7 @@ void m_for_stmt(statement* init, conditional* c) {
     int reg = evalExpr(c->condition);
     char* bstr = c->branchType == bt_equal0 ? "beq" : "bne";
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s $%i $0 %s%i_0\n", bstr, reg);
+    snprintf(o, OPERATOR_STRLEN, "%s $%i $0 %s%i_0\n", bstr, reg, BRANCH_LABEL, bi);
     m_add_text(o);
     freeReg(registerState, reg);
     // If the condition failed, branch to end
@@ -586,6 +587,7 @@ void m_for_stmt(statement* init, conditional* c) {
     // write end label
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "%s%i_end:\n", BRANCH_LABEL, bi);
+    m_add_text(o);
 }
 
 void m_while_stmt(conditional* c) {

@@ -7,6 +7,8 @@
 #include"expression.h"
 #include"statement.h"
 #include"slist.h"
+
+#define YYDEBUG 1
 int yyerror(const char *msg);
 int yylex(void);
 %}
@@ -222,7 +224,9 @@ body:
     constantDeclMaybe typeDeclMaybe varDeclMaybe block
     ;
 block:
-    BEGINSYM statementSequence ENDSYM
+    BEGINSYM statementSequence ENDSYM {
+        eval_stmt_list($2);
+    }
     ;
 
 /* Type Declarations */

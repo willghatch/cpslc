@@ -9,10 +9,12 @@
 //extern union yylvalUnion yylval;
 extern FILE *yyin;
 int yylex();
+extern int yydebug;
 //void yyparse();
 
 int main(int argc, char **argv)
 {
+    //yydebug = 1;
 
     FILE *infile = stdin;
 
