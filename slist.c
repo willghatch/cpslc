@@ -50,3 +50,13 @@ void slist_append(slist* ls, void* elem) {
     }
 }
 
+void slist_concat(slist* fst, slist* snd) {
+    if (fst == NULL || snd == NULL)
+        return;
+    slist* ft = fst;
+    while (ft->next != NULL) {
+        ft = ft->next;
+    }
+    ft->next = snd;
+}
+

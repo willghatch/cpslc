@@ -64,6 +64,7 @@ struct id_info
 	int id_label; // For global vars, at least.  Maybe I can use it for more...
 	            // but at the moment, it's supplanting id_addr for globals, since I
 	            // can get them with a label.
+	            // Also for func/proc label number
 	int id_level;
 	TYPE *id_type;
 	ID_KIND id_kind;
@@ -74,6 +75,8 @@ struct id_info
 	// id_next is for a linked list of ID's for a record type...
 	//int id_value; // I have no idea what this is supposed to be
 	expr* const_expr;
+	slist* typedIdentLists; // For func/proc params -- slist of typedidentlist
+	int param_size; // size of all variables in the formal params of a func/proc
  }; /* id_info */
 
 

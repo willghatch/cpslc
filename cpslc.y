@@ -24,6 +24,7 @@ int yylex(void);
 void addVarsOfType(slist* idents, TYPE* type);
 void pushScope();
 void popScope();
+slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t);
 }
 
 %union{
@@ -129,6 +130,12 @@ void popScope();
 %type <htslist_ptr> statementSequence
 %type <expr_val> expressionMaybe
 %type <list_ptr> semicolonStatementStar
+%type <list_ptr> formalParameterExt
+%type <list_ptr> formalParameters
+%type <int_val> forwardOrBody
+%type <htslist_ptr> body
+%type <htslist_ptr> forwardOrBody
+%type <htslist_ptr> block
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -183,49 +190,92 @@ procOrFuncDeclStar:
     | /* empty */ %prec EMPTY
     ;
 procedureDecl:
-    PROCEDURESYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM forwardOrBody {popScope();} SEMICOLONSYM {
+    PROCEDURESYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM forwardOrBody SEMICOLONSYM {
         ID* func = newid($2);
         func->id_kind = Procedure;
         func->id_type = undef_type;
-        // TODO - get the formal parameters and add them in here somehow
+        func->typedIdentLists = $5;
         addIdToTable_noAddrMove(func, scope+currscope);
+        popScope();
     }
     ;
 functionDecl:
-    FUNCTIONSYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM forwardOrBody {popScope();} SEMICOLONSYM {
-        ID* func = newid($2);
-        func->id_kind = Function;
-        func->id_type = $8;
-        // TODO - get the formal parameters and add them in here somehow
-        addIdToTable_noAddrMove(func, scope+currscope);
+    FUNCTIONSYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM forwardOrBody SEMICOLONSYM {
+        // Check if ID already exists (may have been forward declared)
+        char* name = $2;
+        ID* func = IDsearch(name)
+        slist* params = $5;
+        htslist* bod = $10;
+        TYPE* t = $8;
+        int flabel, predeclared = 0;
+        if (func != NULL) {
+            predeclared = 1;
+            if (func->id_kind != Function) {
+                yyerror("Identifier already defined");
+            } else if (!typedIdentLists_equalp(func->typedIdentLists, params)) {
+                yyerror("Formal parameters differ between function declarations");
+            } else {
+                flabel = func->id_label;
+            }
+        } else {
+            flabel = getFPLabel();
+            func = newid(name);
+            func->id_kind = Function;
+            func->id_type = $8;
+            func->typedIdentLists = params;
+            func->id_label = flabel;
+            func->param_size = calcSize_typedIdentLists(params);
+            addIdToTable_noAddrMove(func, scope+currscope-1);
+        }
+        // Write code for body
+        if (bod != NULL) {
+            // TODO - Make label for function
+            // TODO - caller should put params on stack... but maybe that will be before the jump and link... so they may be earlier in the stack than the frame pointer
+                // but anyway, I should reserve space for the other variables in the function scope...
+            eval_stmt_list(bod);
+            // TODO - I should probably check somehow that I'll actually get a return statement... how shall I return stuff, exactly?
+        }
+
+        // remember to pop the scope!
+        popScope();
     }
     ;
 forwardOrBody:
-    FORWARDSYM
-    | body
+    FORWARDSYM 
+        {$$ = NULL}
+    | body 
+        {$$ = $1}
     ;
 formalParameters:
+    /* Add vars to scope, and return list of typedidentlists */
     varMaybe identList COLONSYM type formalParameterExt {
-        addVarsOfType($2, $4);
+        $$ = addVars_and_retTypedIdentLists($2, $4);
     }
-    | /* empty */ %prec EMPTY
+    | /* empty */ %prec EMPTY {
+        $$ = NULL;
+    }
     ;
 formalParameterExt:
+    /* Add vars to scope, and return list of typedidentlists */
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt {
-        addVarsOfType($3, $5);
+        $$ = addVars_and_retTypedIdentLists($3, $5);
     }
-    | /* empty */ %prec EMPTY
+    | /* empty */ %prec EMPTY {
+        $$ = NULL;
+    }
     ;
 varMaybe:
     VARSYM
     | /* empty */ %prec EMPTY
     ;
 body:
-    constantDeclMaybe typeDeclMaybe varDeclMaybe block
+    constantDeclMaybe typeDeclMaybe varDeclMaybe block {
+        $$ = $4;
+    }
     ;
 block:
     BEGINSYM statementSequence ENDSYM {
-        eval_stmt_list($2);
+        $$ = $2;
     }
     ;
 
@@ -692,4 +742,13 @@ void popScope() {
     --currscope;
 }
 
+slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t) {
+        addVarsOfType(idents, t);
+        typedidentlist* til = malloc(sizeof(typedidentlist));
+        til->type = t;
+        til->names = idents;
+        slist* ls = mkSlist(til);
+        slist_concat(ls, $5);
+        return ls;
+}
 

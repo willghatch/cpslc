@@ -29,6 +29,7 @@ struct htslist_struct {
 
 void hts_append(htslist* l, void* data);
 htslist* mkHtslist();
+void slist_concat(slist* fst, slist* snd);
 
 
 #endif //SLIST_H
