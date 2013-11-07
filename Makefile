@@ -23,7 +23,7 @@ lex.yy.o: lex.yy.c cpslc.tab.c
 
 parser.h: cpslc.tab.c
 cpslc.tab.c: cpslc.y
-	bison cpslc.y --verbose
+	bison cpslc.y
 
 cpslc.tab.o: cpslc.tab.c
 	$(CC) $(CFLAGS) cpslc.tab.c 
