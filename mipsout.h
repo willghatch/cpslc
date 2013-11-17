@@ -88,6 +88,7 @@ void m_function_end();
 void m_push_parameter_exprs(slist* paramExprs);
 void m_load_frame_byte(int reg, int offset);
 void m_load_frame_word(int reg, int offset);
+void m_store_ret_val(expr* e);
 
 extern int branchLabelIndex;
 extern int strConstIndex;
