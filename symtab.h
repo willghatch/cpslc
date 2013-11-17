@@ -7,6 +7,8 @@
 #ifndef SYMTAB_H
 #define SYMTAB_H
 
+#include "slist.h"
+
 #define INTSIZE  4	/* integer data */
 #define CHARSIZE 1	/* character data */
 #define BOOLSIZE 1	/* boolean data */

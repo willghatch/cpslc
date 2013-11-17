@@ -132,7 +132,6 @@ slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t);
 %type <list_ptr> semicolonStatementStar
 %type <list_ptr> formalParameterExt
 %type <list_ptr> formalParameters
-%type <int_val> forwardOrBody
 %type <htslist_ptr> body
 %type <htslist_ptr> forwardOrBody
 %type <htslist_ptr> block
@@ -203,7 +202,8 @@ functionDecl:
     FUNCTIONSYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM forwardOrBody SEMICOLONSYM {
         // Check if ID already exists (may have been forward declared)
         char* name = $2;
-        ID* func = IDsearch(name)
+        // Lookup the function in the scope below the current one.
+        ID* func = IDsearch(name, scope[currscope-1]);
         slist* params = $5;
         htslist* bod = $10;
         TYPE* t = $8;
@@ -242,14 +242,16 @@ functionDecl:
     ;
 forwardOrBody:
     FORWARDSYM 
-        {$$ = NULL}
+        {$$ = NULL;}
     | body 
-        {$$ = $1}
+        {$$ = $1;}
     ;
 formalParameters:
     /* Add vars to scope, and return list of typedidentlists */
     varMaybe identList COLONSYM type formalParameterExt {
-        $$ = addVars_and_retTypedIdentLists($2, $4);
+        slist* ls = addVars_and_retTypedIdentLists($2, $4);
+        slist_concat(ls, $5);
+        $$ = ls;
     }
     | /* empty */ %prec EMPTY {
         $$ = NULL;
@@ -258,7 +260,9 @@ formalParameters:
 formalParameterExt:
     /* Add vars to scope, and return list of typedidentlists */
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt {
-        $$ = addVars_and_retTypedIdentLists($3, $5);
+        slist* ls = addVars_and_retTypedIdentLists($3, $5);
+        slist_concat(ls, $6);
+        $$ = ls;
     }
     | /* empty */ %prec EMPTY {
         $$ = NULL;
@@ -748,7 +752,6 @@ slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t) {
         til->type = t;
         til->names = idents;
         slist* ls = mkSlist(til);
-        slist_concat(ls, $5);
         return ls;
 }
 
