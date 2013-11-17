@@ -521,7 +521,7 @@ stopStatement:
     ;
 returnStatement:
     RETURNSYM expressionMaybe {
-        $$ = NULL;  // TODO - fix this...
+        $$ = mkReturnStmt($2); 
     }
     ;
 expressionMaybe:

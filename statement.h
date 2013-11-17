@@ -38,6 +38,7 @@ struct stmt_struct {
     union {
         htslist* if_conditionals;
         slist* exprList; // for read/write stmts
+        expr* expression; // for single expression statements
         struct {
             statement* init;
             conditional* cBlock;
@@ -68,6 +69,7 @@ statement* mkRepeatStmt(expr* condition, htslist* stmts);
 statement* mkWhileStmt(expr* condition, htslist* stmts);
 statement* mkStopStmt();
 statement* mkProcedureStmt(char* name, slist* paramExprs);
+statement* mkReturnStmt(expr* e);
 void stmt_eval(statement* s);
 void eval_stmt_list(htslist* stmts);
 

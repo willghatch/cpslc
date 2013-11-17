@@ -17,6 +17,7 @@ htslist* m_text;
 int strConstIndex = 0;
 int branchLabelIndex = 0;
 int globalVarIndex = 0;
+int ALLREG_PUSH_SIZE = PUSH_REG_MAX - PUSH_REG_MIN + 1;
 
 void mips_init() {
     m_data = mkHtslist();
@@ -710,11 +711,11 @@ void m_proc_stmt(int funcLabel, slist* paramExprs) {
     // TODO - for funcs, deal with return value
 }
 
-void m_function_end(int funclabel) {
+void m_function_end() {
     // this will add a label to the function end and clear the stack
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s_%i_end:\n", FUNC_LABEL, funclabel);
+    snprintf(o, OPERATOR_STRLEN, "%s:\n", FUNC_END_LABEL);
     m_add_text(o);
     // Set the stack pointer to be the frame pointer - this clears the stack frame
     o = malloc(OPERATOR_STRLEN*sizeof(char));

@@ -102,6 +102,13 @@ statement* mkProcedureStmt(char* name, slist* paramExprs) {
     return s;
 }
 
+statement* mkReturnStmt(expr* e) {
+    statement* s = malloc(sizeof(statement));
+    s->type = return_stmt;
+    s->data.expression = e;
+    return s;
+}
+
 
 //// Statement Evaluation:
 void stmt_eval_assign(statement* s) {
@@ -128,6 +135,11 @@ void stmt_eval_stop(statement* s) {
 }
 
 void stmt_eval_return(statement* s) {
+    expr* e = s->data.expression;
+    if (e != NULL) {
+        // push return value to stack
+    }
+    m_function_end();
 }
 
 void stmt_eval_read(statement* s) {
