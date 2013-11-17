@@ -80,6 +80,7 @@ void m_set_fp_to_sp(int offsetFromSp);
 void m_push_all_regs();
 void m_pop_all_regs();
 void m_function_end(int funclabel);
+void m_push_parameter_exprs(slist* paramExprs);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

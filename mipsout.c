@@ -650,18 +650,31 @@ void m_write_stmt(slist* ls) {
 }
 
 void m_proc_stmt(int funcLabel, slist* paramExprs) {
-    // for funcs, return value space will be pushed first
+    // TODO - for funcs, return value space will be pushed first
+    // Push all registers
     m_push_all_regs();
+    regstate* oldRegState = registerState;
+    init_registerState(); // get new registerState;
     // put param values on stack
+    m_push_parameter_exprs(paramExprs);
     // jump and link
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "jal %s_%i\n", FUNC_LABEL, funcLabel);
+    m_add_text(o);
 
+    // Pop all registers
+    m_pop_all_regs();
+    free(registerState);
+    registerState = oldRegState;
+    // TODO - for funcs, deal with return value
 }
 
 void m_function_end(int funclabel) {
     // this will add a label to the function end and clear the stack
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s%i_end:\n", FUNC_LABEL, funclabel);
+    snprintf(o, OPERATOR_STRLEN, "%s_%i_end:\n", FUNC_LABEL, funclabel);
     m_add_text(o);
     // Set the stack pointer to be the frame pointer - this clears the stack frame
     o = malloc(OPERATOR_STRLEN*sizeof(char));
@@ -719,6 +732,45 @@ void m_push_all_regs() {
 void m_pop_all_regs() {
     for(int i = 31; i >= 2; --i) {
         m_pop_reg(i);
+    }
+}
+
+void m_push_word_from_reg(int reg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "sw $%i ($sp)\n", reg);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "addi $sp 4\n");
+    m_add_text(o);
+}
+
+void m_push_byte_from_reg(int reg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "sb $%i ($sp)\n", reg);
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "addi $sp 1\n");
+    m_add_text(o);
+}
+
+void m_push_parameter_exprs(slist* paramExprs) {
+    while (paramExprs != NULL) {
+        expr* e = paramExprs->data;
+        if (e->type == int_type) {
+            int reg = evalExpr(e);
+            m_push_word_from_reg(reg);
+            freeReg(registerState, reg);
+        } else if (e->type == char_type || e->type == bool_type) {
+            int reg = evalExpr(e);
+            m_push_byte_from_reg(reg);
+            freeReg(registerState, reg);
+        } else {
+            // TODO - handle user defined types
+        }
+
+        paramExprs = paramExprs->next;
     }
 }
 

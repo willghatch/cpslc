@@ -2,7 +2,9 @@
 
 #include <stdlib.h>
 #include "statement.h"
+#include "function.h"
 #include "mipsout.h"
+#include "commonstuff.h"
 
 conditional* mkConditional(expr* cond, BranchType btype, htslist* stmts) {
     conditional* c = malloc(sizeof(conditional));
@@ -142,6 +144,9 @@ void stmt_eval_proc(statement* s) {
     char* name = s->data.procdata.name;
     slist* paramExprs = s->data.procdata.paramExprs;
     ID* proc = scopeLookup(name);
+    if(!funcArgListMatches_p(proc, paramExprs)) {
+        yyerror("Invalid argument list for procedure");
+    }
     int funcLabel = proc->id_label;
     m_proc_stmt(funcLabel, paramExprs);
 }
