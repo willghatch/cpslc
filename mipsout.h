@@ -77,6 +77,9 @@ void m_proc_stmt();
 void m_add_function_label(int FLabelNum);
 void m_move_stack_ptr(int size);
 void m_set_fp_to_sp(int offsetFromSp);
+void m_push_all_regs();
+void m_pop_all_regs();
+void m_function_end(int funclabel);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

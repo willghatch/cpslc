@@ -184,6 +184,10 @@ void addVarToCurTable(ID* var) {
 int getSizeOfScopeVars(ID* scope) {
     int size = 0;
     if (scope != NULL) {
+        if(scope->id_kind = Variable) {
+            TYPE* t = scope->id_type;
+            size += t->ty_size;
+        }
         size += getSizeOfScopeVars(scope->id_left);
         size += getSizeOfScopeVars(scope->id_right);
     }

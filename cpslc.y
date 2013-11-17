@@ -573,7 +573,9 @@ commaExpressionStar:
     ;
 procedureCall:
     identifier LPARENSYM maybeExpressionsWithCommas RPARENSYM {
-        $$ = NULL; // TODO - fix this...
+        char* name = $1;
+        slist* paramExprs = $3;
+        $$ = mkProcedureStmt(name, paramExprs);
     }
     ;
 maybeExpressionsWithCommas:

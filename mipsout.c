@@ -649,9 +649,29 @@ void m_write_stmt(slist* ls) {
     m_write_stmt(ls->next);
 }
 
-void m_proc_stmt() {
+void m_proc_stmt(int funcLabel, slist* paramExprs) {
+    // for funcs, return value space will be pushed first
+    m_push_all_regs();
+    // put param values on stack
+    // jump and link
+
 }
 
+void m_function_end(int funclabel) {
+    // this will add a label to the function end and clear the stack
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s%i_end:\n", FUNC_LABEL, funclabel);
+    m_add_text(o);
+    // Set the stack pointer to be the frame pointer - this clears the stack frame
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "move $sp $fp\n");
+    m_add_text(o);
+    // Return to caller
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "j $ra\n");
+    m_add_text(o);
+}
 
 void m_move_stack_ptr(int size) {
 // Moves the stack pointer, for pushing and popping
@@ -670,5 +690,35 @@ void m_set_fp_to_sp(int offsetFromSp) {
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "addi $fp %i\n", offsetFromSp);
     m_add_text(o);
+}
+
+void m_push_reg(int reg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "sw $%i ($sp)\n", reg);
+    m_add_text(o);
+    // advance sp one word
+    m_move_stack_ptr(4);
+}
+
+void m_pop_reg(int reg) {
+    // move sp back one word
+    m_move_stack_ptr(-4);
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "lw $%i ($sp)\n", reg);
+    m_add_text(o);
+}
+
+void m_push_all_regs() {
+    for(int i = 2; i <= 31; ++i) {
+        m_push_reg(i);
+    }
+}
+
+void m_pop_all_regs() {
+    for(int i = 31; i >= 2; --i) {
+        m_pop_reg(i);
+    }
 }
 

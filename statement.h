@@ -46,6 +46,10 @@ struct stmt_struct {
             expr* lvalue;
             expr* rvalue;
         } assigndata;
+        struct {
+            char* name;
+            slist* paramExprs;
+        } procdata;
     } data;
 };
 
@@ -63,6 +67,7 @@ statement* mkForStmt(statement* assign, inctype updown, expr* finalVal, htslist*
 statement* mkRepeatStmt(expr* condition, htslist* stmts);
 statement* mkWhileStmt(expr* condition, htslist* stmts);
 statement* mkStopStmt();
+statement* mkProcedureStmt(char* name, slist* paramExprs);
 void stmt_eval(statement* s);
 void eval_stmt_list(htslist* stmts);
 

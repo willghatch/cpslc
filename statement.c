@@ -92,6 +92,14 @@ statement* mkStopStmt() {
     return s;
 }
 
+statement* mkProcedureStmt(char* name, slist* paramExprs) {
+    statement* s = malloc(sizeof(statement));
+    s->type = proc_stmt;
+    s->data.procdata.name = name;
+    s->data.procdata.paramExprs = paramExprs;
+    return s;
+}
+
 
 //// Statement Evaluation:
 void stmt_eval_assign(statement* s) {
@@ -131,6 +139,11 @@ void stmt_eval_write(statement* s) {
 }
 
 void stmt_eval_proc(statement* s) {
+    char* name = s->data.procdata.name;
+    slist* paramExprs = s->data.procdata.paramExprs;
+    ID* proc = scopeLookup(name);
+    int funcLabel = proc->id_label;
+    m_proc_stmt(funcLabel, paramExprs);
 }
 
 void stmt_eval(statement* s) {
