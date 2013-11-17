@@ -331,6 +331,13 @@ int isGlobal(ID* id) {
     return 0;
 }
 
+int isByte_p(TYPE* t) {
+    return t->ty_size == 1;
+}
+int isWord_p(TYPE* t) {
+    return t->ty_size == 4;
+}
+
 // Everybody loves global variables
 ID *scope [SCOPEDEPTH];
 int currscope = 0;

@@ -98,6 +98,8 @@ void addIdToTable_noAddrMove(ID* newId, ID** table);
 void addVarToCurTable(ID* var);
 void reserveGlobals();
 int isGlobal(ID* id);
+int isByte_p(TYPE* t);
+int isWord_p(TYPE* t);
 int getSizeOfScopeVars(ID* scope);
 
 

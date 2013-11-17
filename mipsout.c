@@ -322,6 +322,14 @@ void m_write_bool(int reg) {
 
 void m_add_main_label() {
     m_add_text("\nmain:\n");
+    // Initialize stack pointer
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "#Init stack\n");
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "la $sp %s\n\n", STACK_SPACE_LABEL);
+    m_add_text(o);
 }
 
 void m_add_function_label(int FLabelNum) {
@@ -354,9 +362,6 @@ void m_write_file(char* file) {
 
     // write text section
     fprintf(f, "\n.text\n");
-    // Initialize stack pointer
-    fprintf(f, "#Init stack\n");
-    fprintf(f, "la $sp %s\n\n", STACK_SPACE_LABEL);
     
     // Print the text list
     ls = m_text->head;
@@ -466,8 +471,8 @@ void m_read_expr_int(ID* intvar) {
     } else {
         m_store_word_local(reg, intvar->id_addr, 0);
     }
-
     freeReg(registerState, reg);
+    // TODO -- Make this work with lvalues rather than IDs for user defined types
 }
 
 void m_read_expr(expr* e) {
@@ -571,12 +576,21 @@ void m_write_if_branchblock(int branchIndex, slist* conditionals) {
 //// Statement printing!
 
 void m_assign_stmt(expr* lval, expr* rval) {
-    if(lval->kind == globalVar && lval->type == int_type) {
+    TYPE* t = lval->type;
+    int isByte = isByte_p(t);
+    if(lval->kind == globalVar && (isWord_p(t) || isByte)) {
         int reg = evalExpr(rval);
+        // TODO - check for an offset on the lval
         int globalIndex = lval->edata.id->id_label;
-        m_store_word_global(reg, globalIndex, 0, 0);
+        m_store_word_global(reg, globalIndex, 0, isByte);
     }
-    // TODO - deal with other lvalue types and kinds
+    else if (lval->kind == localVar && (isWord_p(t) || isByte)) {
+        int reg = evalExpr(rval);
+        // TODO - check for further offset from .[] extensions of lval
+        int offset = lval->edata.id->id_addr;
+        m_store_word_local(reg, offset, isByte);
+    }
+    // TODO - deal with assigning to user defined types
 }
 
 void m_if_stmt(htslist* conditionals) {
