@@ -335,6 +335,9 @@ void m_write_file(char* file) {
     // add special character printing string
     m_align();
     fprintf(f, "%s:\n\t.space 2\n", CHAR_PRINT_LABEL);
+    // Put stack space
+    m_align();
+    fprintf(f, "%s:\n\t.space %i\n", STACK_SPACE_LABEL, STACK_SIZE);
     slist* ls = m_data->head;
     while(ls != NULL) {
         fprintf(f, ls->data);
@@ -343,6 +346,11 @@ void m_write_file(char* file) {
 
     // write text section
     fprintf(f, "\n.text\n");
+    // Initialize stack pointer
+    fprintf(f, "#Init stack\n");
+    fprintf(f, "la $sp %s\n\n", STACK_SPACE_LABEL);
+    
+    // Print the text list
     ls = m_text->head;
     while(ls != NULL) {
         fprintf(f, ls->data);

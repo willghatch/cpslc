@@ -19,6 +19,8 @@
 #define STR_READ_LEN 500
 #define FALSE_STR_LABEL "m_false_str"
 #define TRUE_STR_LABEL "m_true_str"
+#define STACK_SPACE_LABEL "m_stack_space"
+#define STACK_SIZE 10000
 
 #define SYSC_PRINT_INT 1
 #define SYSC_PRINT_STR 4
