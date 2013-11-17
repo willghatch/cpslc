@@ -9,7 +9,6 @@
 #include"slist.h"
 
 #define YYDEBUG 1
-int yyerror(const char *msg);
 int yylex(void);
 %}
 
@@ -22,10 +21,12 @@ int yylex(void);
 #include"mipsout.h"
 #include"function.h"
 
+int yyerror(const char *msg);
 void addVarsOfType(slist* idents, TYPE* type);
 void pushScope();
 void popScope();
 slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t);
+slist* retTypedIdentLists(slist* idents, TYPE* t);
 }
 
 %union{
@@ -149,7 +150,9 @@ slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t);
 
 %%
 program:
-    constantDeclMaybe typeDeclMaybe varDeclMaybe {reserveGlobals();} procOrFuncDeclStar {m_add_main_label();} block endPeriod
+    constantDeclMaybe typeDeclMaybe varDeclMaybe {reserveGlobals();} procOrFuncDeclStar {m_add_main_label();} block endPeriod {
+        eval_stmt_list($7);
+    }
     ;
 endPeriod:
     PERIODSYM
@@ -191,52 +194,21 @@ procOrFuncDeclStar:
     ;
 procedureDecl:
     PROCEDURESYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM SEMICOLONSYM forwardOrBody SEMICOLONSYM {
-        ID* func = newid($2);
-        func->id_kind = Procedure;
-        func->id_type = undef_type;
-        func->typedIdentLists = $5;
-        addIdToTable_noAddrMove(func, scope+currscope);
+        char* name = $2;
+        slist* params = $5;
+        htslist* bod = $8;
+        declareFunc(name, params, bod, NULL);
+        // remember to pop the scope!
         popScope();
     }
     ;
 functionDecl:
     FUNCTIONSYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM forwardOrBody SEMICOLONSYM {
-        // Check if ID already exists (may have been forward declared)
         char* name = $2;
-        // Lookup the function in the scope below the current one.
-        ID* func = IDsearch(name, scope[currscope-1]);
         slist* params = $5;
         htslist* bod = $10;
         TYPE* t = $8;
-        int flabel, predeclared = 0;
-        if (func != NULL) {
-            predeclared = 1;
-            if (func->id_kind != Function) {
-                yyerror("Identifier already defined");
-            } else if (!typedIdentList_list_equalp(func->typedIdentLists, params)) {
-                yyerror("Formal parameters differ between function declarations");
-            } else {
-                flabel = func->id_label;
-            }
-        } else {
-            flabel = getFPLabel();
-            func = newid(name);
-            func->id_kind = Function;
-            func->id_type = $8;
-            func->typedIdentLists = params;
-            func->id_label = flabel;
-            func->param_size = calcSize_typedIdentList_list(params);
-            addIdToTable_noAddrMove(func, scope+currscope-1);
-        }
-        // Write code for body
-        if (bod != NULL) {
-            // TODO - Make label for function
-            // TODO - caller should put params on stack... but maybe that will be before the jump and link... so they may be earlier in the stack than the frame pointer
-                // but anyway, I should reserve space for the other variables in the function scope...
-            eval_stmt_list(bod);
-            // TODO - I should probably check somehow that I'll actually get a return statement... how shall I return stuff, exactly?
-        }
-
+        declareFunc(name, params, bod, t);
         // remember to pop the scope!
         popScope();
     }
@@ -749,6 +721,10 @@ void popScope() {
 
 slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t) {
         addVarsOfType(idents, t);
+        return retTypedIdentLists(idents, t);
+}
+
+slist* retTypedIdentLists(slist* idents, TYPE* t) {
         typedidentlist* til = malloc(sizeof(typedidentlist));
         til->type = t;
         til->names = idents;

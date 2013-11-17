@@ -21,6 +21,7 @@
 #define TRUE_STR_LABEL "m_true_str"
 #define STACK_SPACE_LABEL "m_stack_space"
 #define STACK_SIZE 10000
+#define FUNC_LABEL "m_function"
 
 #define SYSC_PRINT_INT 1
 #define SYSC_PRINT_STR 4
@@ -73,6 +74,9 @@ void m_return_stmt();
 void m_read_stmt(slist* ls);
 void m_write_stmt(slist* ls);
 void m_proc_stmt();
+void m_add_function_label(int FLabelNum);
+void m_move_stack_ptr(int size);
+void m_set_fp_to_sp(int offsetFromSp);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

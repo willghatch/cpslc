@@ -181,6 +181,15 @@ void addVarToCurTable(ID* var) {
     addIdToTable_noAddrMove(var, scope+currscope);
 }
 
+int getSizeOfScopeVars(ID* scope) {
+    int size = 0;
+    if (scope != NULL) {
+        size += getSizeOfScopeVars(scope->id_left);
+        size += getSizeOfScopeVars(scope->id_right);
+    }
+    return size;
+}
+
 void freeIdTree(ID* tree) {
     if (tree == NULL) {
         return;

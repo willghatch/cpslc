@@ -323,6 +323,13 @@ void m_add_main_label() {
     m_add_text("\nmain:\n");
 }
 
+void m_add_function_label(int FLabelNum) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "\n%s_%i:\n", FUNC_LABEL, FLabelNum);
+    m_add_text(o);
+}
+
 void m_write_file(char* file) {
     FILE* f = fopen(file, "w");
     fprintf(f, "\n#File written by the (not so) amazing cpslc written by William Hatch\n");
@@ -645,4 +652,23 @@ void m_write_stmt(slist* ls) {
 void m_proc_stmt() {
 }
 
+
+void m_move_stack_ptr(int size) {
+// Moves the stack pointer, for pushing and popping
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "addi $sp %i\n", size);
+    m_add_text(o);
+}
+
+void m_set_fp_to_sp(int offsetFromSp) {
+// sets the frame pointer before stack pointer (to set it before passed in args)
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "move $fp $sp\n");
+    m_add_text(o);
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "addi $fp %i\n", offsetFromSp);
+    m_add_text(o);
+}
 

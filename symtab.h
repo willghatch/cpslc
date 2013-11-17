@@ -51,7 +51,7 @@ struct type_info
 	} ty_form;
 }; /* type_info */
 
-enum identifier_kind {Constant_id, Type, Variable, RParameter, VParameter, 
+enum identifier_kind {Constant_id, Type, Variable, FParameter, 
                        Field, Procedure, Function};
 
 
@@ -98,6 +98,7 @@ void addIdToTable_noAddrMove(ID* newId, ID** table);
 void addVarToCurTable(ID* var);
 void reserveGlobals();
 int isGlobal(ID* id);
+int getSizeOfScopeVars(ID* scope);
 
 
 
