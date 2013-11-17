@@ -828,3 +828,15 @@ void m_load_frame_byte(int reg, int offset) {
     m_add_text(o);
 }
 
+void m_store_ret_val(expr* e) {
+    TYPE* t = e->type;
+    int tsize = t->ty_size;
+    int fp_offset = -tsize - ALLREG_PUSH_SIZE;
+    int reg = eval(e);
+    if (isWord_p(t) || isByte_p(t)) {
+        m_store_word_local(reg, fp_offset, isByte_p(t));
+    } else {
+        // TODO - handle user defined types
+    }
+}
+

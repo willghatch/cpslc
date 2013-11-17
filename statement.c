@@ -138,6 +138,7 @@ void stmt_eval_return(statement* s) {
     expr* e = s->data.expression;
     if (e != NULL) {
         // push return value to stack
+        m_store_ret_val(e);
     }
     m_function_end();
 }

@@ -22,7 +22,7 @@
 #define STACK_SPACE_LABEL "m_stack_space"
 #define STACK_SIZE 10000
 #define FUNC_LABEL "m_function"
-#define FUNC_LABEL_END "m_function_end"
+#define FUNC_END_LABEL "m_function_end"
 #define FP_REG_NUM 30
 #define PUSH_REG_MIN 2
 #define PUSH_REG_MAX 31
@@ -84,7 +84,7 @@ void m_move_stack_ptr(int size);
 void m_set_fp_to_sp(int offsetFromSp);
 void m_push_all_regs();
 void m_pop_all_regs();
-void m_function_end(int funclabel);
+void m_function_end();
 void m_push_parameter_exprs(slist* paramExprs);
 void m_load_frame_byte(int reg, int offset);
 void m_load_frame_word(int reg, int offset);
