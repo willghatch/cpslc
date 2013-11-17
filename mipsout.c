@@ -323,13 +323,13 @@ void m_write_bool(int reg) {
 void m_add_main_label() {
     m_add_text("\nmain:\n");
     // Initialize stack pointer
-    char* o;
-    o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "#Init stack\n");
-    m_add_text(o);
-    o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "la $sp %s\n\n", STACK_SPACE_LABEL);
-    m_add_text(o);
+    //char* o;
+    //o = malloc(OPERATOR_STRLEN*sizeof(char));
+    //snprintf(o, OPERATOR_STRLEN, "#Init stack\n");
+    //m_add_text(o);
+    //o = malloc(OPERATOR_STRLEN*sizeof(char));
+    //snprintf(o, OPERATOR_STRLEN, "la $sp %s\n\n", STACK_SPACE_LABEL);
+    //m_add_text(o);
 }
 
 void m_add_function_label(int FLabelNum) {
@@ -354,6 +354,7 @@ void m_write_file(char* file) {
     // Put stack space
     m_align();
     fprintf(f, "%s:\n\t.space %i\n", STACK_SPACE_LABEL, STACK_SIZE);
+    m_align();
     slist* ls = m_data->head;
     while(ls != NULL) {
         fprintf(f, ls->data);
