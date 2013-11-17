@@ -10,11 +10,8 @@
 #include "slist.h"
 
 #define INTSIZE  4	/* integer data */
-//#define CHARSIZE 1	/* character data */
-//#define BOOLSIZE 1	/* boolean data */
-//Quick alignment fix... I'll figure out something better later.
-#define CHARSIZE 4
-#define BOOLSIZE 4
+#define CHARSIZE 1	/* character data */
+#define BOOLSIZE 1	/* boolean data */
 #define POINTSIZE 4	/* pointer data */
 #define NOSIZE   0	/* unknown data */
 
