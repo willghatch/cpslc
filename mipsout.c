@@ -3,6 +3,7 @@
 #include "slist.h"
 #include "expression.h"
 #include "register.h"
+#include "commonstuff.h"
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -430,16 +431,28 @@ void m_read_str(int reg, int size) {
     m_add_text("syscall\n");
 }
 
-void m_assign_int_global(int reg, int globalIndex) {
-    m_add_text("#storing global\n");
+void m_store_word(int fromReg, int addrReg, int offset, int storeByteOnly) {
     char* o;
-    //o = malloc(OPERATOR_STRLEN*sizeof(char));
-    //snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n", tempreg, GLOBAL_VAR_LABEL, globalIndex);
-    //m_add_text(o);
+    char* op = storeByteOnly ? "sb" : "sw";
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "sw $%i, %s%i\n", reg, GLOBAL_VAR_LABEL, globalIndex);
-    // TODO - allow an offset input.
+    snprintf(o, OPERATOR_STRLEN, "%s $%i, %i($%i)\n", op, fromReg, offset, addrReg);
     m_add_text(o);
+}
+
+void m_store_word_global(int reg, int globalIndex, int offset, int storeByteOnly) {
+    m_add_text("#storing global\n");
+    int tempreg = getReg(registerState);
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n", tempreg, GLOBAL_VAR_LABEL, globalIndex);
+    m_add_text(o);
+    m_store_word(reg, tempreg, offset, 0);
+    freeReg(registerState, tempreg);
+}
+
+void m_store_word_local(int reg, int offset, int storeByteOnly) {
+    m_add_text("#storing local\n");
+    m_store_word(reg, FP_REG_NUM, offset, storeByteOnly);
 }
 
 void m_read_expr_int(ID* intvar) {
@@ -449,19 +462,25 @@ void m_read_expr_int(ID* intvar) {
     reg = getReg(registerState);
     m_read_int(reg);
     if (isGlobal(intvar)) {
-        m_assign_int_global(reg, intvar->id_label);
+        m_store_word_global(reg, intvar->id_label, 0, 0);
     } else {
-    // TODO - implement!
+        m_store_word_local(reg, intvar->id_addr, 0);
     }
 
     freeReg(registerState, reg);
 }
 
 void m_read_expr(expr* e) {
-    if (e->kind == globalVar) {
-        m_read_expr_int(e->edata.id);
+    if (!(e->kind == globalVar || e->kind == localVar)) {
+        yyerror("Read expression with a non-variable");
     }
-    // TODO - implement for other expressions than just global vars...
+    if(e->type == int_type) {
+        m_read_expr_int(e->edata.id);
+    } else if (e->type == char_type) {
+        // TODO - support character reading
+    } else {
+        yyerror("Read expression with a type other than integer or character");
+    }
 }
 
 
@@ -555,7 +574,7 @@ void m_assign_stmt(expr* lval, expr* rval) {
     if(lval->kind == globalVar && lval->type == int_type) {
         int reg = evalExpr(rval);
         int globalIndex = lval->edata.id->id_label;
-        m_assign_int_global(reg, globalIndex);
+        m_store_word_global(reg, globalIndex, 0, 0);
     }
     // TODO - deal with other lvalue types and kinds
 }

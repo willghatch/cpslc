@@ -22,6 +22,7 @@
 #define STACK_SPACE_LABEL "m_stack_space"
 #define STACK_SIZE 10000
 #define FUNC_LABEL "m_function"
+#define FP_REG_NUM 30
 
 #define SYSC_PRINT_INT 1
 #define SYSC_PRINT_STR 4
