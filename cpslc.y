@@ -20,6 +20,7 @@ int yylex(void);
 #include"typedidentlist.h"
 #include"statement.h"
 #include"mipsout.h"
+#include"function.h"
 
 void addVarsOfType(slist* idents, TYPE* type);
 void pushScope();
@@ -212,7 +213,7 @@ functionDecl:
             predeclared = 1;
             if (func->id_kind != Function) {
                 yyerror("Identifier already defined");
-            } else if (!typedIdentLists_equalp(func->typedIdentLists, params)) {
+            } else if (!typedIdentList_list_equalp(func->typedIdentLists, params)) {
                 yyerror("Formal parameters differ between function declarations");
             } else {
                 flabel = func->id_label;
@@ -224,7 +225,7 @@ functionDecl:
             func->id_type = $8;
             func->typedIdentLists = params;
             func->id_label = flabel;
-            func->param_size = calcSize_typedIdentLists(params);
+            func->param_size = calcSize_typedIdentList_list(params);
             addIdToTable_noAddrMove(func, scope+currscope-1);
         }
         // Write code for body
