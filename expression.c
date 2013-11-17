@@ -53,13 +53,20 @@ expr* newRegExpr(int reg, TYPE* type) {
     return e;
 }
 
-expr* newGlobalVExpr(ID* id) {
+expr* newVariableExpr(ID* id, int isGlobal) {
     expr* e;
     e = malloc(sizeof(expr));
     e->type = id->id_type;
-    e->kind = globalVar;
-    e->edata.globalId = id;
+    e->kind = isGlobal ? globalVar : localVar;
+    e->edata.id = id;
     return e;
+}
+expr* newGlobalVExpr(ID* id) {
+    return newVariableExpr(id, 1);
+}
+
+expr* newLocalVExpr(ID* id) {
+    return newVariableExpr(id, 0);
 }
 
 expr* newBinOpExpr(openum op, expr* e1, expr* e2) {
@@ -109,6 +116,7 @@ int evalExpr(expr* e) {
 // probably don't want to be too aggressive at freeing, because
 // there are some global expressions (true, false)
     int reg = -1;
+    TYPE* t;
     switch(e->kind) {
         case constant_expr:
             reg = getReg(registerState);
@@ -122,10 +130,24 @@ int evalExpr(expr* e) {
             break;
         case globalVar:
             reg = getReg(registerState);
-            if(e->edata.globalId->id_type == int_type) {
-                m_load_global_int(e->edata.globalId->id_label, reg);
+            t = e->edata.id->id_type;
+            if(t == int_type) {
+                m_load_global_word(e->edata.id->id_label, reg);
+            } else if (t == char_type || t == bool_type) {
+                m_load_global_byte(e->edata.id->id_label, reg);
             }
             // TODO - handle more types
+            break;
+        case localVar:
+            reg = getReg(registerState);
+            t = e->edata.id->id_type;
+            int offset = e->edata.id->id_addr;
+            if(t == int_type) {
+                m_load_frame_word(reg, offset);
+            } else if (t == char_type || t == bool_type) {
+                m_load_frame_byte(reg, offset);
+            }
+            // TODO - handle user types
             break;
         default:
             break;

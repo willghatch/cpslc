@@ -666,8 +666,9 @@ lValue:
             // global var case
             $$ = newGlobalVExpr(id);
             // TODO - deal with offset from subelement access
-        }
-        else {
+        } else if (id->id_kind == Variable) { // local variable
+            $$ = newLocalVExpr(id);
+        } else {
             yyerror("It appears you're trying to use an lValue that's not yet supported.  Bummer!");
             $$ = NULL; // although it will already exit from an error...
         }

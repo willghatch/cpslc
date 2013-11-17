@@ -56,7 +56,8 @@ void m_write_expr(expr* e);
 void m_add_main_label();
 void m_write_file(char* file);
 int m_reserve_global_var(int size);
-void m_load_global_int(int index, int reg);
+void m_load_global_byte(int index, int reg);
+void m_load_global_word(int index, int reg);
 void m_load_global_address(int index, int reg);
 void m_read_int(int reg);
 void m_read_str(int reg, int size);
@@ -81,6 +82,8 @@ void m_push_all_regs();
 void m_pop_all_regs();
 void m_function_end(int funclabel);
 void m_push_parameter_exprs(slist* paramExprs);
+void m_load_frame_byte(int reg, int offset);
+void m_load_frame_word(int reg, int offset);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

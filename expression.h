@@ -15,7 +15,7 @@ enum operator_enum {
 
 typedef enum expr_kind_enum expr_kind;
 enum expr_kind_enum {
-    constant_expr, operation_bin, operation_un, registerVal, globalVar, localVar, parameter
+    constant_expr, operation_bin, operation_un, registerVal, globalVar, localVar
 };
 
 typedef struct expression_struct expr;
@@ -43,8 +43,7 @@ struct expression_struct {
         } opdata;
         struct {
         } funcdata;
-        ID* globalId;
-        int stackOffset;
+        ID* id;
     } edata;
     
 };
@@ -59,6 +58,7 @@ expr* newRegExpr(int reg, TYPE* type);
 expr* newBinOpExpr(openum op, expr* e1, expr* e2);
 expr* newUnOpExpr(openum op, expr* e1);
 expr* newGlobalVExpr(ID* id);
+expr* newLocalVExpr(ID* id);
 int evalExpr(expr* e);
 int doBinaryOperator(enum operator_enum op, expr* operand1, expr* operand2);
 int doUnaryOperator(enum operator_enum op, expr* operand1);

@@ -390,10 +390,16 @@ void m_load_global_address(int index, int reg) {
     m_add_text(o);
 }
 
-void m_load_global_int(int index, int reg) {
+void m_load_global_word(int index, int reg) {
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "lw $%i, %s%i #load global\n", reg, GLOBAL_VAR_LABEL, index);
+    m_add_text(o);
+}
+void m_load_global_byte(int index, int reg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "lb $%i, %s%i #load global\n", reg, GLOBAL_VAR_LABEL, index);
     m_add_text(o);
 }
 
@@ -453,7 +459,7 @@ void m_read_expr_int(ID* intvar) {
 
 void m_read_expr(expr* e) {
     if (e->kind == globalVar) {
-        m_read_expr_int(e->edata.globalId);
+        m_read_expr_int(e->edata.id);
     }
     // TODO - implement for other expressions than just global vars...
 }
@@ -548,7 +554,7 @@ void m_write_if_branchblock(int branchIndex, slist* conditionals) {
 void m_assign_stmt(expr* lval, expr* rval) {
     if(lval->kind == globalVar && lval->type == int_type) {
         int reg = evalExpr(rval);
-        int globalIndex = lval->edata.globalId->id_label;
+        int globalIndex = lval->edata.id->id_label;
         m_assign_int_global(reg, globalIndex);
     }
     // TODO - deal with other lvalue types and kinds
@@ -772,5 +778,18 @@ void m_push_parameter_exprs(slist* paramExprs) {
 
         paramExprs = paramExprs->next;
     }
+}
+
+void m_load_frame_word(int reg, int offset) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "lw $%i %i($fp)\n", reg, offset);
+    m_add_text(o);
+}
+void m_load_frame_byte(int reg, int offset) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "lb $%i %i($fp)\n", reg, offset);
+    m_add_text(o);
 }
 
