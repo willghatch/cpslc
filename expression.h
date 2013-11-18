@@ -4,7 +4,10 @@
 
 // So I need something to hold values for expressions...
 
-#include"symtab.h"
+#include "symtab.h"
+
+// Forward declare statement from statement.h, of which this file is a dependency
+typedef struct stmt_struct statement;
 
 typedef enum operator_enum openum;
 enum operator_enum {
@@ -15,7 +18,7 @@ enum operator_enum {
 
 typedef enum expr_kind_enum expr_kind;
 enum expr_kind_enum {
-    constant_expr, operation_bin, operation_un, registerVal, globalVar, localVar
+    constant_expr, operation_bin, operation_un, registerVal, globalVar, localVar, functionCall
 };
 
 typedef struct expression_struct expr;
@@ -41,9 +44,8 @@ struct expression_struct {
             expr* operand2;
             enum operator_enum op;
         } opdata;
-        struct {
-        } funcdata;
         ID* id;
+        statement* funcCall;
     } edata;
     
 };
@@ -59,6 +61,7 @@ expr* newBinOpExpr(openum op, expr* e1, expr* e2);
 expr* newUnOpExpr(openum op, expr* e1);
 expr* newGlobalVExpr(ID* id);
 expr* newLocalVExpr(ID* id);
+expr* newFuncCallExpr(statement* procstmt);
 int evalExpr(expr* e);
 int doBinaryOperator(enum operator_enum op, expr* operand1, expr* operand2);
 int doUnaryOperator(enum operator_enum op, expr* operand1);

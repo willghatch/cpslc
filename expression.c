@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include "register.h"
 #include "mipsout.h"
+#include "commonstuff.h"
 
 expr* newNumExpr(int val) {
     expr* e;
@@ -97,7 +98,7 @@ expr* newBinOpExpr(openum op, expr* e1, expr* e2) {
             e->type = int_type;
             break;
         default:
-            //yyerror("unknown operator in expression creation... dying...");
+            yyerror("unknown operator in expression creation... dying...");
             break;
     }
     return e;
@@ -110,13 +111,26 @@ expr* newUnOpExpr(openum op, expr* e1) {
     return e;
 }
 
+expr* newFuncCallExpr(statement* procstmt) {
+    expr* e = malloc(sizeof(expr));
+    char* name = procstmt->data.procdata.name;
+    ID* id = scopeLookup(name);
+    if (id == NULL) {
+        yyerror("unknown function name");
+    }
+    e->type = id->id_type;
+    e->kind = functionCall;
+    e->edata.funcCall = procstmt;
+    return e;
+}
+
 int evalExpr(expr* e) {
 // returns a register number for the register that the output will be in
 // TODO - do I want to free the expression here?  Not that I care about memory leaks much in this.
 // probably don't want to be too aggressive at freeing, because
 // there are some global expressions (true, false)
     int reg = -1;
-    TYPE* t;
+    TYPE* t = e->type;
     switch(e->kind) {
         case constant_expr:
             reg = getReg(registerState);
@@ -130,7 +144,6 @@ int evalExpr(expr* e) {
             break;
         case globalVar:
             reg = getReg(registerState);
-            t = e->edata.id->id_type;
             if(t == int_type) {
                 m_load_global_word(e->edata.id->id_label, reg);
             } else if (t == char_type || t == bool_type) {
@@ -140,7 +153,6 @@ int evalExpr(expr* e) {
             break;
         case localVar:
             reg = getReg(registerState);
-            t = e->edata.id->id_type;
             int offset = e->edata.id->id_addr;
             if(t == int_type) {
                 m_load_frame_word(reg, offset);
@@ -149,6 +161,11 @@ int evalExpr(expr* e) {
             }
             // TODO - handle user types
             break;
+        case functionCall:
+            if(isWord_p(t) || isByte_p(t)) {
+                reg = asldfalskalskfjlaskdjaskjf////////////Need to modify frame storing function to store based on stack pointer alternatively, so I can grab this...
+            }
+            // TODO - handle user types
         default:
             break;
     }

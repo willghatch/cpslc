@@ -671,9 +671,6 @@ void m_repeat_stmt(conditional* c) {
 void m_stop_stmt() {
 }
 
-void m_return_stmt() {
-}
-
 void m_read_stmt(slist* ls) {
     if (ls == NULL) {
         return;
@@ -690,8 +687,11 @@ void m_write_stmt(slist* ls) {
     m_write_stmt(ls->next);
 }
 
-void m_proc_stmt(int funcLabel, slist* paramExprs) {
-    // TODO - for funcs, return value space will be pushed first
+void m_func_call(int funcLabel, slist* paramExprs, TYPE* t) {
+    // return value space will be pushed first
+    if(t != NULL) {
+        m_move_stack_ptr(t->ty_size);
+    }
     // Push all registers
     m_push_all_regs();
     regstate* oldRegState = registerState;
@@ -708,7 +708,8 @@ void m_proc_stmt(int funcLabel, slist* paramExprs) {
     m_pop_all_regs();
     free(registerState);
     registerState = oldRegState;
-    // TODO - for funcs, deal with return value
+    
+    // Leave return value on stack - expression handling code will clean it up.
 }
 
 void m_function_end() {

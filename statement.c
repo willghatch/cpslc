@@ -157,11 +157,12 @@ void stmt_eval_proc(statement* s) {
     char* name = s->data.procdata.name;
     slist* paramExprs = s->data.procdata.paramExprs;
     ID* proc = scopeLookup(name);
+    TYPE* t = proc->id_type;
     if(!funcArgListMatches_p(proc, paramExprs)) {
-        yyerror("Invalid argument list for procedure");
+        yyerror("Invalid argument list for function or procedure");
     }
     int funcLabel = proc->id_label;
-    m_proc_stmt(funcLabel, paramExprs);
+    m_func_call(funcLabel, paramExprs, t);
 }
 
 void stmt_eval(statement* s) {
