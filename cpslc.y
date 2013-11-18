@@ -604,9 +604,9 @@ expression:
     | ORDSYM LPARENSYM expression RPARENSYM
         {$$ = NULL;} /* TODO - fix*/
     | PREDSYM LPARENSYM expression RPARENSYM
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = newBinOpExpr(op_sub, $3, one_expr);}
     | SUCCSYM LPARENSYM expression RPARENSYM
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = newBinOpExpr(op_add, $3, one_expr);}
     | lValue 
         {$$ = $1;}
     | NUMERICALSYM
