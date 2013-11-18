@@ -763,12 +763,20 @@ void m_pop_reg(int reg) {
 }
 
 void m_push_all_regs() {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "# Pushing all regs\n");
+    m_add_text(o);
     for(int i = 2; i <= 31; ++i) {
         m_push_reg(i);
     }
 }
 
 void m_pop_all_regs() {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "# Popping all regs\n");
+    m_add_text(o);
     for(int i = 31; i >= 2; --i) {
         m_pop_reg(i);
     }
