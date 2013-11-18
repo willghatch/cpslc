@@ -782,36 +782,29 @@ void m_pop_all_regs() {
     }
 }
 
-void m_push_word_from_reg(int reg) {
+void m_push_word_from_reg(int reg, int justByte) {
+    char* storeInst = justByte ? "sb" : "sw";
+    int size = justByte ? 1 : WORDSIZE;
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "sw $%i ($sp)\n", reg);
+    snprintf(o, OPERATOR_STRLEN, "%s $%i ($sp)\n", storeInst, reg);
     m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "addi $sp $sp 4\n");
-    m_add_text(o);
-}
-
-void m_push_byte_from_reg(int reg) {
-    char* o;
-    o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "sb $%i ($sp)\n", reg);
-    m_add_text(o);
-    o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "addi $sp $sp 1\n");
+    snprintf(o, OPERATOR_STRLEN, "addi $sp $sp %i\n", size);
     m_add_text(o);
 }
 
 void m_push_parameter_exprs(slist* paramExprs) {
     while (paramExprs != NULL) {
         expr* e = paramExprs->data;
-        if (e->type == int_type) {
+        TYPE* t = e->type;
+        if (isWord_p(t)) {
             int reg = evalExpr(e);
-            m_push_word_from_reg(reg);
+            m_push_word_from_reg(reg, 0);
             freeReg(registerState, reg);
-        } else if (e->type == char_type || e->type == bool_type) {
+        } else if (isByte_p(t)) {
             int reg = evalExpr(e);
-            m_push_byte_from_reg(reg);
+            m_push_word_from_reg(reg, 1);
             freeReg(registerState, reg);
         } else {
             // TODO - handle user defined types
@@ -833,12 +826,13 @@ void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP) 
 void m_store_ret_val(expr* e) {
     TYPE* t = e->type;
     int tsize = t->ty_size;
-    int fp_offset = -tsize - ALLREG_PUSH_SIZE;
+    int fp_offset = -tsize - ALLREG_PUSH_SIZE * WORDSIZE;
     int reg = evalExpr(e);
     if (isWord_p(t) || isByte_p(t)) {
         m_store_word_local(reg, fp_offset, isByte_p(t));
     } else {
         // TODO - handle user defined types
     }
+    freeReg(registerState, reg);
 }
 

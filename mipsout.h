@@ -25,6 +25,7 @@
 #define FP_REG_NUM 30
 #define PUSH_REG_MIN 2
 #define PUSH_REG_MAX 31
+#define WORDSIZE 4
 
 #define SYSC_PRINT_INT 1
 #define SYSC_PRINT_STR 4
