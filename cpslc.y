@@ -203,10 +203,10 @@ procedureDecl:
     }
     ;
 functionDecl:
-    FUNCTIONSYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM COLONSYM type SEMICOLONSYM forwardOrBody SEMICOLONSYM {
+    FUNCTIONSYM identifier {pushScope();} LPARENSYM formalParameters RPARENSYM COLONSYM type {declareFunc($2, $5, NULL, $8);} SEMICOLONSYM forwardOrBody SEMICOLONSYM {
         char* name = $2;
         slist* params = $5;
-        htslist* bod = $10;
+        htslist* bod = $11;
         TYPE* t = $8;
         declareFunc(name, params, bod, t);
         // remember to pop the scope!

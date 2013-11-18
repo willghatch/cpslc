@@ -23,7 +23,7 @@ int typedidentlists_equalp(typedidentlist* l, typedidentlist* r) {
     slist* nl = l->names;
     slist* nr = r->names;
     while(nl != NULL && nr != NULL) {
-        if (!strcmp(nl->data, nr->data)) {
+        if (strcmp(nl->data, nr->data)) {
             return 0;
         }
         nl = nl->next;
@@ -39,11 +39,11 @@ int typedIdentList_list_equalp(slist* l,  slist* r) {
 // takes two slist*'s of typedidentlists
 // Returns true if the params are equivalent
     while(l != NULL && r != NULL) {
-        l = l->next;
-        r = r->next;
         if(!typedidentlists_equalp(l->data, r->data)) {
             return 0;
         }
+        l = l->next;
+        r = r->next;
     }
     if(l != NULL || r != NULL) {
         return 0;
@@ -94,6 +94,7 @@ void declareFunc(char* name, slist* params, htslist* body, TYPE* t) {
         func->id_label = flabel;
         func->param_size = calcSize_typedIdentList_list(params);
         addIdToTable_noAddrMove(func, scope+(currscope-1));
+        printf("added id to table: %s\n", name);
     }
     // Write code for body
     if (body != NULL) {
