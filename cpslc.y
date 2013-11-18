@@ -600,9 +600,9 @@ expression:
     | procedureCall
         {$$ = newFuncCallExpr($1);}
     | CHRSYM LPARENSYM expression RPARENSYM
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = newCastExpr(char_type, $3);}
     | ORDSYM LPARENSYM expression RPARENSYM
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = newCastExpr(int_type, $3);}
     | PREDSYM LPARENSYM expression RPARENSYM
         {$$ = newBinOpExpr(op_sub, $3, one_expr);}
     | SUCCSYM LPARENSYM expression RPARENSYM

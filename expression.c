@@ -124,6 +124,17 @@ expr* newFuncCallExpr(statement* procstmt) {
     return e;
 }
 
+expr* newCastExpr(TYPE* newtype, expr* toCast) {
+    if(toCast->type != int_type && toCast->type != char_type) {
+        yyerror("Trying to typecast something that's not an integer or char.  No, no!");
+    }
+    expr* e = malloc(sizeof(expr));
+    e->type = newtype;
+    e->kind = typecast;
+    e->edata.innerExpr = toCast;
+    return e;
+}
+
 int evalExpr(expr* e) {
 // returns a register number for the register that the output will be in
 // TODO - do I want to free the expression here?  Not that I care about memory leaks much in this.
@@ -141,6 +152,9 @@ int evalExpr(expr* e) {
             break;
         case operation_un:
             reg = doUnaryOperator(e->edata.opdata.op, e->edata.opdata.operand1);
+            break;
+        case typecast:
+            reg = evalExpr(e->edata.innerExpr);
             break;
         case globalVar:
             reg = getReg(registerState);
