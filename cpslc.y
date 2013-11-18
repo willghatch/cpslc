@@ -279,7 +279,6 @@ identEqType:
     }
     ;
 type:
-    /* TODO - return real TYPE* */
     simpleType {
         ID* id = scopeLookup($1);
         if (id == NULL) {
