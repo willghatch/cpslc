@@ -94,7 +94,6 @@ void declareFunc(char* name, slist* params, htslist* body, TYPE* t) {
         func->id_label = flabel;
         func->param_size = calcSize_typedIdentList_list(params);
         addIdToTable_noAddrMove(func, scope+(currscope-1));
-        printf("added id to table: %s\n", name);
     }
     // Write code for body
     if (body != NULL) {

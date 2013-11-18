@@ -669,6 +669,11 @@ void m_repeat_stmt(conditional* c) {
 }
 
 void m_stop_stmt() {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "li $v0 %i #stop call\n", SYSC_EXIT);
+    m_add_text(o);
+    m_add_text("syscall\n");
 }
 
 void m_read_stmt(slist* ls) {

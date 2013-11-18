@@ -132,6 +132,7 @@ void stmt_eval_for(statement* s) {
 }
 
 void stmt_eval_stop(statement* s) {
+    m_stop_stmt();
 }
 
 void stmt_eval_return(statement* s) {
