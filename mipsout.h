@@ -22,7 +22,6 @@
 #define STACK_SPACE_LABEL "m_stack_space"
 #define STACK_SIZE 10000
 #define FUNC_LABEL "m_function"
-#define FUNC_END_LABEL "m_function_end"
 #define FP_REG_NUM 30
 #define PUSH_REG_MIN 2
 #define PUSH_REG_MAX 31
@@ -85,8 +84,7 @@ void m_pop_all_regs();
 void m_function_end();
 void m_func_call(int funcLabel, slist* paramExprs, TYPE* t);
 void m_push_parameter_exprs(slist* paramExprs);
-void m_load_frame_byte(int reg, int offset);
-void m_load_frame_word(int reg, int offset);
+void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP);
 void m_store_ret_val(expr* e);
 
 extern int branchLabelIndex;

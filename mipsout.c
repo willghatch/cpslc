@@ -715,9 +715,6 @@ void m_func_call(int funcLabel, slist* paramExprs, TYPE* t) {
 void m_function_end() {
     // this will add a label to the function end and clear the stack
     char* o;
-    o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s:\n", FUNC_END_LABEL);
-    m_add_text(o);
     // Set the stack pointer to be the frame pointer - this clears the stack frame
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "move $sp $fp\n");
@@ -816,16 +813,12 @@ void m_push_parameter_exprs(slist* paramExprs) {
     }
 }
 
-void m_load_frame_word(int reg, int offset) {
+void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP) {
+    char* loadInstr = justByte ? "lb" : "lw";
+    char* ptr = useSPinsteadOfFP ? "sp" : "fp";
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "lw $%i %i($fp)\n", reg, offset);
-    m_add_text(o);
-}
-void m_load_frame_byte(int reg, int offset) {
-    char* o;
-    o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "lb $%i %i($fp)\n", reg, offset);
+    snprintf(o, OPERATOR_STRLEN, "%s $%i %i($%s)\n", loadInstr, reg, offset, ptr);
     m_add_text(o);
 }
 

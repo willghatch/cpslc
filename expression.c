@@ -155,15 +155,17 @@ int evalExpr(expr* e) {
             reg = getReg(registerState);
             int offset = e->edata.id->id_addr;
             if(t == int_type) {
-                m_load_frame_word(reg, offset);
+                m_load_frame_word(reg, offset, 0, 0);
             } else if (t == char_type || t == bool_type) {
-                m_load_frame_byte(reg, offset);
+                m_load_frame_word(reg, offset, 1, 0);
             }
             // TODO - handle user types
             break;
         case functionCall:
             if(isWord_p(t) || isByte_p(t)) {
-                reg = asldfalskalskfjlaskdjaskjf////////////Need to modify frame storing function to store based on stack pointer alternatively, so I can grab this...
+                reg = getReg(registerState);
+                m_load_frame_word(reg, -t->ty_size, isByte_p(t), 1);
+                m_move_stack_ptr(-t->ty_size);
             }
             // TODO - handle user types
         default:

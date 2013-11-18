@@ -598,7 +598,7 @@ expression:
     | LPARENSYM expression RPARENSYM
         {$$ = $2;}
     | procedureCall
-        {$$ = NULL;} /* TODO - fix*/
+        {$$ = newFuncCallExpr($1);}
     | CHRSYM LPARENSYM expression RPARENSYM
         {$$ = NULL;} /* TODO - fix*/
     | ORDSYM LPARENSYM expression RPARENSYM
