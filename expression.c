@@ -144,9 +144,9 @@ int evalExpr(expr* e) {
             break;
         case globalVar:
             reg = getReg(registerState);
-            if(t == int_type) {
+            if(isWord_p(t)) {
                 m_load_global_word(e->edata.id->id_label, reg);
-            } else if (t == char_type || t == bool_type) {
+            } else if (isByte_p(t)) {
                 m_load_global_byte(e->edata.id->id_label, reg);
             }
             // TODO - handle more types
@@ -154,15 +154,16 @@ int evalExpr(expr* e) {
         case localVar:
             reg = getReg(registerState);
             int offset = e->edata.id->id_addr;
-            if(t == int_type) {
+            if(isWord_p(t)) {
                 m_load_frame_word(reg, offset, 0, 0);
-            } else if (t == char_type || t == bool_type) {
+            } else if (isByte_p(t)) {
                 m_load_frame_word(reg, offset, 1, 0);
             }
             // TODO - handle user types
             break;
         case functionCall:
             if(isWord_p(t) || isByte_p(t)) {
+                stmt_eval(e->edata.funcCall);
                 reg = getReg(registerState);
                 m_load_frame_word(reg, -t->ty_size, isByte_p(t), 1);
                 m_move_stack_ptr(-t->ty_size);

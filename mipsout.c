@@ -729,7 +729,7 @@ void m_move_stack_ptr(int size) {
 // Moves the stack pointer, for pushing and popping
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "addi $sp %i\n", size);
+    snprintf(o, OPERATOR_STRLEN, "addi $sp $sp %i\n", size);
     m_add_text(o);
 }
 
@@ -740,7 +740,7 @@ void m_set_fp_to_sp(int offsetFromSp) {
     snprintf(o, OPERATOR_STRLEN, "move $fp $sp\n");
     m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "addi $fp %i\n", offsetFromSp);
+    snprintf(o, OPERATOR_STRLEN, "addi $fp $fp %i\n", offsetFromSp);
     m_add_text(o);
 }
 
@@ -780,7 +780,7 @@ void m_push_word_from_reg(int reg) {
     snprintf(o, OPERATOR_STRLEN, "sw $%i ($sp)\n", reg);
     m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "addi $sp 4\n");
+    snprintf(o, OPERATOR_STRLEN, "addi $sp $sp 4\n");
     m_add_text(o);
 }
 
@@ -790,7 +790,7 @@ void m_push_byte_from_reg(int reg) {
     snprintf(o, OPERATOR_STRLEN, "sb $%i ($sp)\n", reg);
     m_add_text(o);
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "addi $sp 1\n");
+    snprintf(o, OPERATOR_STRLEN, "addi $sp $sp 1\n");
     m_add_text(o);
 }
 
