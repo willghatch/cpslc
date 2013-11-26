@@ -338,6 +338,31 @@ int isWord_p(TYPE* t) {
     return t->ty_size == 4;
 }
 
+
+LvalExtension* mkLvalExtension_field(char* name) {
+    LvalExtension* lv = malloc(sizeof(LvalExtension));
+    lv->type = RecordField;
+    lv->data.name = name;
+    return lv;
+}
+LvalExtension* mkLvalExtension_array(expr* index) {
+    LvalExtension* lv = malloc(sizeof(LvalExtension));
+    lv->type = ArrayIndex;
+    lv->data.index = index;
+    return lv;
+}
+
+ID* findRecordField(TYPE* rtype, char* fname) {
+    ID* field = rtype->ty_form.ty_record.FirstField;
+    while(field != NULL) {
+        if (!strcmp(field->id_name, fname)) {
+            return field;
+        }
+        field = field->id_next;
+    }
+    return NULL;
+}
+
 // Everybody loves global variables
 ID *scope [SCOPEDEPTH];
 int currscope = 0;

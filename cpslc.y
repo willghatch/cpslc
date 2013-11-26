@@ -137,6 +137,7 @@ slist* retTypedIdentLists(slist* idents, TYPE* t);
 %type <htslist_ptr> body
 %type <htslist_ptr> forwardOrBody
 %type <htslist_ptr> block
+%type <list_ptr> dotIdentOrExpStar
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -651,7 +652,9 @@ binaryOp:
     ;
 lValue:
     identifier dotIdentOrExpStar {
+        expr* retval;
         ID* id = scopeLookup($1);
+        slist* extlist = $2;
         if (id == NULL) {
             yyerror("Error, trying to look up an identifier which doesn't seem to be declared");
         }
@@ -659,26 +662,52 @@ lValue:
         if (id->id_kind == Constant_id) {
             expr* e = id->const_expr;
             if (e != NULL && e->kind == constant_expr) {
-                $$ = e;
+                retval = e;
             }
         } else if (id->id_kind == Variable && isGlobal(id)) {
             // global var case
-            $$ = newGlobalVExpr(id);
+            retval = newGlobalVExpr(id);
         } else if (id->id_kind == Variable) { // local variable
-            $$ = newLocalVExpr(id);
+            retval = newLocalVExpr(id);
         } else {
             yyerror("It appears you're trying to use an lValue that's not yet supported.  Bummer!");
-            $$ = NULL; // although it will already exit from an error...
         }
         // TODO - deal with offset from subelement access on both local and global vars
         // probably make both expression types include an offset, and calculate it based
         // on the dot/bracket extensions
+        TYPE* curType = retval->type;
+        while(extlist != NULL) {
+            LvalExtension* lvext = extlist->data;
+            if (lvext->type == RecordField) {
+                ID* recordField = findRecordField(curType, lvext->data.fieldname);
+                if (recordField == NULL) {
+                    yyerror("Field not found in record");
+                }
+                asldfkjasldfjasldfjasldkjfalskdjfalskdjfalsdkjflaskdjf Finish this...
+            } else { // array type
+            }
+            extlist = extlist->next;
+        }
+
+        $$ = retval;
     }
     ;
 dotIdentOrExpStar:
-    PERIODSYM identifier dotIdentOrExpStar
-    | LBRACKETSYM expression RBRACKETSYM dotIdentOrExpStar
+/* returns list of LvalExtensions */
+    PERIODSYM identifier dotIdentOrExpStar {
+        LvalExtension lve = mkLvalExtension_field($2);
+        slist* ls = mkSlist(lve);
+        ls->next = $3;
+        $$ = ls;
+    }
+    | LBRACKETSYM expression RBRACKETSYM dotIdentOrExpStar {
+        LvalExtension lve = mkLvalExtension_array($2);
+        slist* ls = mkSlist(lve);
+        ls->next = $4;
+        $$ = ls;
+    }
     | /* empty */ %prec EMPTY
+        {$$ = NULL;}
     ;
 identifier:
     IDENTSYM                        {$$ = yylval.str_val;}

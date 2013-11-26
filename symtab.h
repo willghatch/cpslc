@@ -84,6 +84,20 @@ struct id_info
  }; /* id_info */
 
 
+enum LvalExtensionType {
+    RecordField, ArrayIndex
+};
+
+typedef struct LvalExtensionStruct LvalExtension;
+struct LvalExtensionStruct {
+    enum LvalExtensionType type;
+    union {
+        expr* index;
+        char* fieldname;
+    } data;
+};
+
+
 // prototypes...
 TYPE *typecreate (int size, TY_KIND kind, ID *id_list, TYPE *elem_type, char* name);
 char* getTypeName(TYPE* type);
@@ -103,6 +117,9 @@ int isGlobal(ID* id);
 int isByte_p(TYPE* t);
 int isWord_p(TYPE* t);
 int getSizeOfScopeVars(ID* scope);
+LvalExtension* mkLvalExtension_field(char* name);
+LvalExtension* mkLvalExtension_array(expr* index);
+ID* findRecordField(TYPE* rtype, char* fname);
 
 
 
