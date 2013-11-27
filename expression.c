@@ -50,7 +50,7 @@ expr* newRegExpr(int reg, TYPE* type) {
     e = malloc(sizeof(expr));
     e->type = type;
     e->kind = registerVal;
-    e->reg_number = reg;
+    e->edata.reg_number = reg;
     return e;
 }
 
@@ -139,8 +139,9 @@ int evalExpr(expr* e) {
 // returns a register number for the register that the output will be in
 // TODO - do I want to free the expression here?  Not that I care about memory leaks much in this.
 // probably don't want to be too aggressive at freeing, because
-// there are some global expressions (true, false)
+// there are some global expressions (eg. true, false)
     int reg = -1;
+    int offsetReg, addrReg;
     TYPE* t = e->type;
     switch(e->kind) {
         case constant_expr:
@@ -158,22 +159,36 @@ int evalExpr(expr* e) {
             break;
         case globalVar:
             reg = getReg(registerState);
-            if(isWord_p(t)) {
-                m_load_global_word(e->edata.id->id_label, reg);
-            } else if (isByte_p(t)) {
-                m_load_global_byte(e->edata.id->id_label, reg);
+            offsetReg = evalExpr(e->offsetExpr);
+            int addrReg = getReg(registerState);
+            int globalIndex = e->edata.id->id_label;
+            m_load_global_address(globalIndex, addrReg);
+            // TODO - do I care that this blatantly leaks memory?  Probably not.
+            addrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(offsetReg, int_type), newRegExpr(addrReg, int_type)));
+            if(isWord_p(t) || isByte_p(t)) {
+                m_load_word_from_addr(reg, addrReg, isByte_p(t));
+            } else { 
+                // Do memory copy
             }
             // TODO - handle more types
+            freeReg(registerState, addrReg); // offsetReg freed by the evaluation earlier
             break;
         case localVar:
             reg = getReg(registerState);
-            int offset = e->edata.id->id_addr;
+            int staticOffset = e->edata.id->id_addr;
+            
+            offsetReg = evalExpr(e->offsetExpr);
+            addrReg = getReg(registerState);
+            m_copy_fp(addrReg);
+            // TODO - do I care that this blatantly leaks memory?  Probably not.
+            addrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(offsetReg, int_type), newRegExpr(addrReg, int_type)));
             if(isWord_p(t)) {
-                m_load_frame_word(reg, offset, 0, 0);
+                m_load_frame_word(reg, staticOffset, 0, 0, addrReg);
             } else if (isByte_p(t)) {
-                m_load_frame_word(reg, offset, 1, 0);
+                m_load_frame_word(reg, staticOffset, 1, 0, addrReg);
             }
             // TODO - handle user types
+            freeReg(registerState, addrReg); // offsetReg freed by the evaluation earlier
             break;
         case functionCall:
             if(isWord_p(t) || isByte_p(t)) {
@@ -183,6 +198,9 @@ int evalExpr(expr* e) {
                 m_move_stack_ptr(-t->ty_size);
             }
             // TODO - handle user types
+            break;
+        case registerVal:
+            reg = e->edata.reg_number;
         default:
             break;
     }

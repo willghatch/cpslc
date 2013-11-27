@@ -23,6 +23,7 @@
 #define STACK_SIZE 10000
 #define FUNC_LABEL "m_function"
 #define FP_REG_NUM 30
+#define SP_REG_NUM 29
 #define PUSH_REG_MIN 2
 #define PUSH_REG_MAX 31
 #define WORDSIZE 4
@@ -85,8 +86,10 @@ void m_pop_all_regs();
 void m_function_end();
 void m_func_call(int funcLabel, slist* paramExprs, TYPE* t);
 void m_push_parameter_exprs(slist* paramExprs);
-void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP);
+void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP, int overrideReg);
 void m_store_ret_val(expr* e);
+void m_copy_fp(int destReg);
+void m_load_word_from_addr(int destReg, int addrReg, int byteOnlyP);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

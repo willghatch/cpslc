@@ -676,6 +676,7 @@ lValue:
         // probably make both expression types include an offset, and calculate it based
         // on the dot/bracket extensions
         TYPE* curType = retval->type;
+        expr* offsetExpr = newNumExpr(0);
         while(extlist != NULL) {
             LvalExtension* lvext = extlist->data;
             if (lvext->type == RecordField) {
@@ -683,11 +684,23 @@ lValue:
                 if (recordField == NULL) {
                     yyerror("Field not found in record");
                 }
-                asldfkjasldfjasldfjasldkjfalskdjfalskdjfalsdkjflaskdjf Finish this...
+                int offset = recordField->id_addr;
+                offsetExpr = newBinOpExpr(op_add, offsetExpr, newNumExpr(offset));
+                curType = recordField->id_type;
             } else { // array type
+                expr* index = lvext->data.ArrayIndex;
+                TYPE* subtype = curType->ty_form.ty_array.ElementType;
+                int elemsize = subtype->ty_size;
+                // Adjust index because someone decided it would be a good idea to let it start somewhere other than 0
+                expr* adjustedIndex = newBinOpExpr(op_sub, index, newNumExpr(curType->ty_form.ty_array.min));
+                expr* offsetInArray = newBinOpExpr(op_mult, adjustedIndex, newNumExpr(elemsize));
+                offsetExpr = newBinOpExpr(op_add, offsetExpr, offsetInArray);
+                curType = subtype;
             }
             extlist = extlist->next;
         }
+        retval->offsetExpr = offsetExpr;
+        retval->type = curType;
 
         $$ = retval;
     }

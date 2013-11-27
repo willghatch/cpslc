@@ -398,6 +398,14 @@ void m_load_global_address(int index, int reg) {
     m_add_text(o);
 }
 
+void m_load_word_from_addr(int destReg, int addrReg, int byteOnlyP) {
+    char* loadStr = byteOnlyP ? "lb" : "lw";
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "%s $%i, ($%i) \n", loadStr, destReg, addrReg);
+    m_add_text(o);
+}
+
 void m_load_global_word(int index, int reg) {
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
@@ -408,6 +416,13 @@ void m_load_global_byte(int index, int reg) {
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "lb $%i, %s%i #load global\n", reg, GLOBAL_VAR_LABEL, index);
+    m_add_text(o);
+}
+
+void m_copy_fp(int destReg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "move $%i, $fp\n", destReg);
     m_add_text(o);
 }
 
@@ -819,12 +834,14 @@ void m_push_parameter_exprs(slist* paramExprs) {
     }
 }
 
-void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP) {
+void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP, int overrideReg) {
     char* loadInstr = justByte ? "lb" : "lw";
-    char* ptr = useSPinsteadOfFP ? "sp" : "fp";
+    int addrReg = useSPinsteadOfFP ? SP_REG_NUM : FP_REG_NUM;
+    // if some other non-stack/frame pointer register is given as an override, use it.
+    addrReg = overrideReg ? overrideReg : addrReg;
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s $%i %i($%s)\n", loadInstr, reg, offset, ptr);
+    snprintf(o, OPERATOR_STRLEN, "%s $%i %i($%i)\n", loadInstr, reg, offset, addrReg);
     m_add_text(o);
 }
 

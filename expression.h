@@ -32,7 +32,7 @@ struct expression_struct {
     // I should have some way to hold the value of generic types... but when
     // they're not constant I'll have to have part of the parse tree or something...
     int str_const_index; // index in the list of string constants
-    int reg_number;
+    expr* offsetExpr;
     union {
         // TODO - move these values into the union.
         //int int_val;
@@ -44,6 +44,7 @@ struct expression_struct {
             expr* operand2;
             enum operator_enum op;
         } opdata;
+        int reg_number;
         ID* id;
         statement* funcCall;
         expr* innerExpr;

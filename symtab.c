@@ -342,7 +342,7 @@ int isWord_p(TYPE* t) {
 LvalExtension* mkLvalExtension_field(char* name) {
     LvalExtension* lv = malloc(sizeof(LvalExtension));
     lv->type = RecordField;
-    lv->data.name = name;
+    lv->data.fieldname = name;
     return lv;
 }
 LvalExtension* mkLvalExtension_array(expr* index) {
