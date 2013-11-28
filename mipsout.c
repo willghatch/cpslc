@@ -398,11 +398,11 @@ void m_load_global_address(int index, int reg) {
     m_add_text(o);
 }
 
-void m_load_word_from_addr(int destReg, int addrReg, int byteOnlyP) {
+void m_load_word_from_addr(int destReg, int addrReg, int staticOffset, int byteOnlyP) {
     char* loadStr = byteOnlyP ? "lb" : "lw";
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s $%i, ($%i) \n", loadStr, destReg, addrReg);
+    snprintf(o, OPERATOR_STRLEN, "%s $%i, %i($%i) \n", loadStr, destReg, staticOffset, addrReg);
     m_add_text(o);
 }
 
@@ -454,11 +454,11 @@ void m_read_str(int reg, int size) {
     m_add_text("syscall\n");
 }
 
-void m_store_word(int fromReg, int addrReg, int offset, int storeByteOnly) {
+void m_store_word(int fromReg, int addrReg, int staticOffset, int storeByteOnly) {
     char* o;
     char* op = storeByteOnly ? "sb" : "sw";
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "%s $%i, %i($%i)\n", op, fromReg, offset, addrReg);
+    snprintf(o, OPERATOR_STRLEN, "%s $%i, %i($%i)\n", op, fromReg, staticOffset, addrReg);
     m_add_text(o);
 }
 
@@ -873,5 +873,27 @@ void m_store_ret_val(expr* e) {
         // TODO - handle user defined types
     }
     freeReg(registerState, reg);
+}
+
+void m_copyMem(int srcAddrReg, int dstAddrReg, int size) {
+    int words = size / 4;
+    int extraBytes = size % 4;
+    int tempreg = getReg(registerState);
+    for(int i = 0; i < words; ++i) {
+        m_load_word_from_addr(tempreg, srcAddrReg, i*4, 0);
+        m_store_word(tempreg, dstAddrReg, i*4, 0);
+    }
+    for(int i = 0; i < extraBytes; ++i) {
+        m_load_word_from_addr(tempreg, srcAddrReg, words*4+i, 1);
+        m_store_word(tempreg, dstAddrReg, words*4+i, 1);
+    }
+    freeReg(registerState, tempreg);
+}
+
+void m_copy_reg(int dstReg, int srcReg) {
+    char* o;
+    o = malloc(OPERATOR_STRLEN*sizeof(char));
+    snprintf(o, OPERATOR_STRLEN, "move $%i, $%i\n", dstReg, srcReg);
+    m_add_text(o);
 }
 

@@ -166,9 +166,9 @@ int evalExpr(expr* e) {
             // TODO - do I care that this blatantly leaks memory?  Probably not.
             addrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(offsetReg, int_type), newRegExpr(addrReg, int_type)));
             if(isWord_p(t) || isByte_p(t)) {
-                m_load_word_from_addr(reg, addrReg, isByte_p(t));
+                m_load_word_from_addr(reg, addrReg, 0, isByte_p(t));
             } else { 
-                // Do memory copy
+                m_copy_reg(reg, addrReg);
             }
             // TODO - handle more types
             freeReg(registerState, addrReg); 
@@ -187,19 +187,22 @@ int evalExpr(expr* e) {
                 m_load_frame_word(reg, staticOffset, 0, 0, addrReg);
             } else if (isByte_p(t)) {
                 m_load_frame_word(reg, staticOffset, 1, 0, addrReg);
+            } else {
+                m_copy_reg(reg, addrReg);
             }
-            // TODO - handle user types
             freeReg(registerState, addrReg); 
             freeReg(registerState, offsetReg);
             break;
         case functionCall:
+            stmt_eval(e->edata.funcCall);
             if(isWord_p(t) || isByte_p(t)) {
-                stmt_eval(e->edata.funcCall);
                 reg = getReg(registerState);
                 m_load_frame_word(reg, -(t->ty_size), isByte_p(t), 1, 0);
                 m_move_stack_ptr(-t->ty_size);
+            } else {
+                reg = getReg(registerState);
+                asdflkajsdlfka // put address of return into register... when it's used, deal with the stack (clear or leave if it's for another function call)
             }
-            // TODO - handle user types
             break;
         case registerVal:
             reg = e->edata.reg_number;

@@ -90,7 +90,8 @@ void m_push_parameter_exprs(slist* paramExprs);
 void m_load_frame_word(int reg, int offset, int justByte, int useSPinsteadOfFP, int overrideReg);
 void m_store_ret_val(expr* e);
 void m_copy_fp(int destReg);
-void m_load_word_from_addr(int destReg, int addrReg, int byteOnlyP);
+void m_load_word_from_addr(int destReg, int addrReg, int staticOffset, int byteOnlyP);
+void m_copy_reg(int dstReg, int srcReg);
 
 extern int branchLabelIndex;
 extern int strConstIndex;
