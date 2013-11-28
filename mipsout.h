@@ -33,6 +33,7 @@
 #define SYSC_READ_INT 5
 #define SYSC_READ_STR 8
 #define SYSC_EXIT 10
+#define SYSC_READ_CHAR 12
 
 void mips_init();
 void m_add_data(char* str);

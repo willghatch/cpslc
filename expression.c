@@ -171,7 +171,8 @@ int evalExpr(expr* e) {
                 // Do memory copy
             }
             // TODO - handle more types
-            freeReg(registerState, addrReg); // offsetReg freed by the evaluation earlier
+            freeReg(registerState, addrReg); 
+            freeReg(registerState, offsetReg);
             break;
         case localVar:
             reg = getReg(registerState);
@@ -188,13 +189,14 @@ int evalExpr(expr* e) {
                 m_load_frame_word(reg, staticOffset, 1, 0, addrReg);
             }
             // TODO - handle user types
-            freeReg(registerState, addrReg); // offsetReg freed by the evaluation earlier
+            freeReg(registerState, addrReg); 
+            freeReg(registerState, offsetReg);
             break;
         case functionCall:
             if(isWord_p(t) || isByte_p(t)) {
                 stmt_eval(e->edata.funcCall);
                 reg = getReg(registerState);
-                m_load_frame_word(reg, -t->ty_size, isByte_p(t), 1);
+                m_load_frame_word(reg, -(t->ty_size), isByte_p(t), 1, 0);
                 m_move_stack_ptr(-t->ty_size);
             }
             // TODO - handle user types

@@ -34,6 +34,8 @@ int getReg(regstate* state) {
 }
 
 void freeReg(regstate* state, int r) {
+    if (r == 0)
+        return;
     state->reg[r-FIRSTREG] = 0;
 }
 

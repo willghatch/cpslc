@@ -474,6 +474,11 @@ ifStatement:
         if(elsecond != NULL) {
             hts_append(conds, elsecond);
         }
+        // Add a null else block to fix bug where an if statement without
+        // an else block always executes.
+        conditional* nullcond = mkConditional(NULL, bt_nequal0, NULL);
+        hts_append(conds, nullcond);
+
         $$ = mkIfStmt(conds);
     }
     ;
@@ -688,7 +693,7 @@ lValue:
                 offsetExpr = newBinOpExpr(op_add, offsetExpr, newNumExpr(offset));
                 curType = recordField->id_type;
             } else { // array type
-                expr* index = lvext->data.ArrayIndex;
+                expr* index = lvext->data.index;
                 TYPE* subtype = curType->ty_form.ty_array.ElementType;
                 int elemsize = subtype->ty_size;
                 // Adjust index because someone decided it would be a good idea to let it start somewhere other than 0
@@ -708,13 +713,13 @@ lValue:
 dotIdentOrExpStar:
 /* returns list of LvalExtensions */
     PERIODSYM identifier dotIdentOrExpStar {
-        LvalExtension lve = mkLvalExtension_field($2);
+        LvalExtension* lve = mkLvalExtension_field($2);
         slist* ls = mkSlist(lve);
         ls->next = $3;
         $$ = ls;
     }
     | LBRACKETSYM expression RBRACKETSYM dotIdentOrExpStar {
-        LvalExtension lve = mkLvalExtension_array($2);
+        LvalExtension* lve = mkLvalExtension_array($2);
         slist* ls = mkSlist(lve);
         ls->next = $4;
         $$ = ls;

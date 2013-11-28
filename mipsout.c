@@ -426,11 +426,12 @@ void m_copy_fp(int destReg) {
     m_add_text(o);
 }
 
-void m_read_int(int reg) {
+void m_read_intchar(int reg, int charNotInt) {
     m_add_text("#reading int\n");
     char* o;
+    int syscall = charNotInt ? SYSC_READ_CHAR : SYSC_READ_INT;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "li $v0, %i\n", SYSC_READ_INT);
+    snprintf(o, OPERATOR_STRLEN, "li $v0, %i\n", syscall);
     m_add_text(o);
     m_add_text("syscall\n");
     o = malloc(OPERATOR_STRLEN*sizeof(char));
@@ -461,32 +462,44 @@ void m_store_word(int fromReg, int addrReg, int offset, int storeByteOnly) {
     m_add_text(o);
 }
 
-void m_store_word_global(int reg, int globalIndex, int offset, int storeByteOnly) {
+void m_store_word_global(int reg, int globalIndex, int offset, int storeByteOnly, expr* offsetExpr) {
     m_add_text("#storing global\n");
     int tempreg = getReg(registerState);
     char* o;
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "la $%i, %s%i\n", tempreg, GLOBAL_VAR_LABEL, globalIndex);
     m_add_text(o);
+    if(offsetExpr != NULL) {
+        tempreg = doBinaryOperator(op_add, newRegExpr(tempreg, int_type), offsetExpr);
+    }
     m_store_word(reg, tempreg, offset, 0);
     freeReg(registerState, tempreg);
 }
 
-void m_store_word_local(int reg, int offset, int storeByteOnly) {
+void m_store_word_local(int reg, int offset, int storeByteOnly, expr* offsetExpr) {
     m_add_text("#storing local\n");
-    m_store_word(reg, FP_REG_NUM, offset, storeByteOnly);
+    int tempreg = getReg(registerState);
+    m_copy_fp(tempreg);
+    if(offsetExpr != NULL) {
+        tempreg = doBinaryOperator(op_add, newRegExpr(tempreg, int_type), offsetExpr);
+    }
+    m_store_word(reg, tempreg, offset, storeByteOnly);
+    freeReg(registerState, tempreg);
 }
 
-void m_read_expr_int(ID* intvar) {
-    //read syscall
-    //store
+void m_read_expr_(ID* intvar, int charNotInt, expr* offsetExpr) {
     int reg;
     reg = getReg(registerState);
-    m_read_int(reg);
-    if (isGlobal(intvar)) {
-        m_store_word_global(reg, intvar->id_label, 0, 0);
+    if(charNotInt) {
+        m_read_intchar(reg, 1);
     } else {
-        m_store_word_local(reg, intvar->id_addr, 0);
+        m_read_intchar(reg, 0);
+    }
+    int addrReg = getReg(registerState);
+    if (isGlobal(intvar)) {
+        m_store_word_global(reg, intvar->id_label, 0, charNotInt && isByte_p(char_type), offsetExpr);
+    } else {
+        m_store_word_local(reg, intvar->id_addr, charNotInt && isByte_p(char_type), offsetExpr);
     }
     freeReg(registerState, reg);
     // TODO -- Make this work with lvalues rather than IDs for user defined types
@@ -496,10 +509,11 @@ void m_read_expr(expr* e) {
     if (!(e->kind == globalVar || e->kind == localVar)) {
         yyerror("Read expression with a non-variable");
     }
+    ID* varId = e->edata.id;
     if(e->type == int_type) {
-        m_read_expr_int(e->edata.id);
+        m_read_expr_(varId, 0, e->offsetExpr);
     } else if (e->type == char_type) {
-        // TODO - support character reading
+        m_read_expr_(varId, 1, e->offsetExpr);
     } else {
         yyerror("Read expression with a type other than integer or character");
     }
@@ -571,7 +585,7 @@ void m_write_if_branchblock(int branchIndex, slist* conditionals) {
     int subIndex = 0;
     while (l != NULL) {
         conditional* c = l->data;
-        if(c->condition == NULL) {
+        if(c == NULL || c->condition == NULL) {
             o = malloc(OPERATOR_STRLEN*sizeof(char));
             snprintf(o, OPERATOR_STRLEN, "b %s%i_%i\n", BRANCH_LABEL, branchIndex, subIndex);
             m_add_text(o);
@@ -595,17 +609,20 @@ void m_write_if_branchblock(int branchIndex, slist* conditionals) {
 void m_assign_stmt(expr* lval, expr* rval) {
     TYPE* t = lval->type;
     int isByte = isByte_p(t);
+    expr* offsetExpr = lval->offsetExpr;
     if(lval->kind == globalVar && (isWord_p(t) || isByte)) {
         int reg = evalExpr(rval);
         // TODO - check for an offset on the lval
         int globalIndex = lval->edata.id->id_label;
-        m_store_word_global(reg, globalIndex, 0, isByte);
+        m_store_word_global(reg, globalIndex, 0, isByte, offsetExpr);
+        freeReg(registerState, reg);
     }
     else if (lval->kind == localVar && (isWord_p(t) || isByte)) {
         int reg = evalExpr(rval);
         // TODO - check for further offset from .[] extensions of lval
         int offset = lval->edata.id->id_addr;
-        m_store_word_local(reg, offset, isByte);
+        m_store_word_local(reg, offset, isByte, offsetExpr);
+        freeReg(registerState, reg);
     }
     // TODO - deal with assigning to user defined types
 }
@@ -851,7 +868,7 @@ void m_store_ret_val(expr* e) {
     int fp_offset = -tsize - ALLREG_PUSH_SIZE * WORDSIZE;
     int reg = evalExpr(e);
     if (isWord_p(t) || isByte_p(t)) {
-        m_store_word_local(reg, fp_offset, isByte_p(t));
+        m_store_word_local(reg, fp_offset, isByte_p(t), NULL);
     } else {
         // TODO - handle user defined types
     }
