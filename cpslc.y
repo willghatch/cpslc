@@ -677,11 +677,8 @@ lValue:
         } else {
             yyerror("It appears you're trying to use an lValue that's not yet supported.  Bummer!");
         }
-        // TODO - deal with offset from subelement access on both local and global vars
-        // probably make both expression types include an offset, and calculate it based
-        // on the dot/bracket extensions
         TYPE* curType = retval->type;
-        expr* offsetExpr = newNumExpr(0);
+        expr* offsetExpr = zero_expr;
         while(extlist != NULL) {
             LvalExtension* lvext = extlist->data;
             if (lvext->type == RecordField) {

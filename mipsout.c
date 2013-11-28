@@ -212,6 +212,8 @@ void m_write_expr(expr* e) {
         m_write_char(reg);
     } else if (e->type == bool_type) {
         m_write_bool(reg);
+    } else {
+        yyerror("Don't try to use a write expression with a user defined type");
     }
     freeReg(registerState, reg);
 }
@@ -502,7 +504,6 @@ void m_read_expr_(ID* intvar, int charNotInt, expr* offsetExpr) {
         m_store_word_local(reg, intvar->id_addr, charNotInt && isByte_p(char_type), offsetExpr);
     }
     freeReg(registerState, reg);
-    // TODO -- Make this work with lvalues rather than IDs for user defined types
 }
 
 void m_read_expr(expr* e) {
@@ -610,21 +611,36 @@ void m_assign_stmt(expr* lval, expr* rval) {
     TYPE* t = lval->type;
     int isByte = isByte_p(t);
     expr* offsetExpr = lval->offsetExpr;
-    if(lval->kind == globalVar && (isWord_p(t) || isByte)) {
-        int reg = evalExpr(rval);
-        // TODO - check for an offset on the lval
+    int reg = evalExpr(rval);
+    int funcRetP = rval->kind == functionCall;
+    if(lval->kind == globalVar) {
         int globalIndex = lval->edata.id->id_label;
-        m_store_word_global(reg, globalIndex, 0, isByte, offsetExpr);
-        freeReg(registerState, reg);
+        if (isWord_p(t) || isByte) {
+            m_store_word_global(reg, globalIndex, 0, isByte, offsetExpr);
+        } else {
+            int addrReg = getReg(registerState);
+            m_load_global_address(globalIndex, addrReg);
+            m_copyMem(reg, addrReg, t->ty_size);
+            freeReg(registerState, addrReg);
+        }
     }
-    else if (lval->kind == localVar && (isWord_p(t) || isByte)) {
-        int reg = evalExpr(rval);
-        // TODO - check for further offset from .[] extensions of lval
+    else if (lval->kind == localVar) {
         int offset = lval->edata.id->id_addr;
-        m_store_word_local(reg, offset, isByte, offsetExpr);
-        freeReg(registerState, reg);
+        if (isWord_p(t) || isByte) {
+            m_store_word_local(reg, offset, isByte, offsetExpr);
+        } else {
+            int addrReg = getReg(registerState);
+            m_load_constant(newNumExpr(offset), addrReg);
+            m_bin_op_to_r1("add", addrReg, FP_REG_NUM);
+            m_copyMem(reg, addrReg, t->ty_size);
+            freeReg(registerState, addrReg);
+        }
+    } 
+    if (funcRetP && !isWord_p(t) && !isByte) {
+        // clean up the stack manually if it's a func return with an odd size
+        m_move_stack_ptr(-t->ty_size);
     }
-    // TODO - deal with assigning to user defined types
+    freeReg(registerState, reg);
 }
 
 void m_if_stmt(htslist* conditionals) {
@@ -835,17 +851,20 @@ void m_push_parameter_exprs(slist* paramExprs) {
     while (paramExprs != NULL) {
         expr* e = paramExprs->data;
         TYPE* t = e->type;
+        int reg = evalExpr(e);
         if (isWord_p(t)) {
-            int reg = evalExpr(e);
             m_push_word_from_reg(reg, 0);
-            freeReg(registerState, reg);
         } else if (isByte_p(t)) {
-            int reg = evalExpr(e);
             m_push_word_from_reg(reg, 1);
-            freeReg(registerState, reg);
         } else {
-            // TODO - handle user defined types
+            // If it's a return value then it's already in the right place
+            // otherwise I need to push it...
+            if (!e->kind == functionCall) {
+                m_copyMem(reg, SP_REG_NUM, t->ty_size);
+                m_move_stack_ptr(t->ty_size);
+            }
         }
+        freeReg(registerState, reg);
 
         paramExprs = paramExprs->next;
     }
@@ -870,7 +889,12 @@ void m_store_ret_val(expr* e) {
     if (isWord_p(t) || isByte_p(t)) {
         m_store_word_local(reg, fp_offset, isByte_p(t), NULL);
     } else {
-        // TODO - handle user defined types
+        int tempreg = getReg(registerState);
+        m_load_constant(newNumExpr(fp_offset), tempreg);
+        m_bin_op_to_r1("add", tempreg, FP_REG_NUM);
+        m_copyMem(reg, tempreg, t->ty_size);
+        freeReg(registerState, tempreg);
+        // When the function returns it will take care of moving the stack pointer...
     }
     freeReg(registerState, reg);
 }

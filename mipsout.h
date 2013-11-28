@@ -92,6 +92,7 @@ void m_store_ret_val(expr* e);
 void m_copy_fp(int destReg);
 void m_load_word_from_addr(int destReg, int addrReg, int staticOffset, int byteOnlyP);
 void m_copy_reg(int dstReg, int srcReg);
+void m_copyMem(int srcAddrReg, int dstAddrReg, int size);
 
 extern int branchLabelIndex;
 extern int strConstIndex;

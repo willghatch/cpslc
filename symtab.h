@@ -133,6 +133,7 @@ extern expr* true_expr;
 extern expr* false_expr;
 extern expr* true_str_expr;
 extern expr* false_str_expr;
+extern expr* zero_expr;
 extern expr* one_expr;
 
 

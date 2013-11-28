@@ -201,7 +201,9 @@ int evalExpr(expr* e) {
                 m_move_stack_ptr(-t->ty_size);
             } else {
                 reg = getReg(registerState);
-                asdflkajsdlfka // put address of return into register... when it's used, deal with the stack (clear or leave if it's for another function call)
+                
+                m_load_constant(newNumExpr(-t->ty_size), reg);
+                m_bin_op_to_r1("add", reg, SP_REG_NUM);
             }
             break;
         case registerVal:
