@@ -1,18 +1,14 @@
 /* cpslc.y */
 
 %{
-#include<stdio.h>
-#include<stdlib.h>
-#include"symtab.h"
-#include"expression.h"
-#include"statement.h"
-#include"slist.h"
 
 #define YYDEBUG 1
 int yylex(void);
 %}
 
 %code requires {
+#include<stdio.h>
+#include<stdlib.h>
 #include"expression.h"
 #include"symtab.h"
 #include"slist.h"
@@ -678,7 +674,7 @@ lValue:
             yyerror("It appears you're trying to use an lValue that's not yet supported.  Bummer!");
         }
         TYPE* curType = retval->type;
-        expr* offsetExpr = zero_expr;
+        expr* offsetExpr = newNumExpr(0);
         while(extlist != NULL) {
             LvalExtension* lvext = extlist->data;
             if (lvext->type == RecordField) {

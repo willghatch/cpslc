@@ -83,7 +83,6 @@ void symtabInit(void) {
     addIdToTable_noAddrMove(boolid, s);
     
     one_expr = newNumExpr(1);
-    zero_expr = newNumExpr(0);
 }
 
 char* getTypeName(TYPE* type) {
