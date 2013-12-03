@@ -12,6 +12,9 @@ all: cpslc lextest
 lextest: lextest_main.o lex.yy.o
 	$(CC) -o lextest lextest_main.o lex.yy.o
 
+lextest_main.o: parser.h lextest_main.c
+	$(CC) $(CFLAGS) lextest_main.c
+
 clean:
 	rm cpslc *.o lex.yy.c cpslc.tab.c parser.h lextest 
 

@@ -307,6 +307,7 @@ recordType:
                 ID* newId = newid(names->data);
                 newId->id_type = type;
                 newId->id_next = idlist;
+                newId->id_addr = size;
                 idlist = newId;
                 size += type->ty_size;
 
