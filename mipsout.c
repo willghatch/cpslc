@@ -774,7 +774,7 @@ void m_function_end() {
     m_add_text(o);
     // Return to caller
     o = malloc(OPERATOR_STRLEN*sizeof(char));
-    snprintf(o, OPERATOR_STRLEN, "j $ra\n");
+    snprintf(o, OPERATOR_STRLEN, "jr $%i\n", RA_REG_NUM);
     m_add_text(o);
 }
 
@@ -820,7 +820,7 @@ void m_push_all_regs() {
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "# Pushing all regs\n");
     m_add_text(o);
-    for(int i = 2; i <= 31; ++i) {
+    for(int i = PUSH_REG_MIN; i <= PUSH_REG_MAX; ++i) {
         m_push_reg(i);
     }
 }
@@ -830,7 +830,7 @@ void m_pop_all_regs() {
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "# Popping all regs\n");
     m_add_text(o);
-    for(int i = 31; i >= 2; --i) {
+    for(int i = PUSH_REG_MAX; i >= PUSH_REG_MIN; --i) {
         m_pop_reg(i);
     }
 }

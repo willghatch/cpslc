@@ -22,8 +22,9 @@
 #define STACK_SPACE_LABEL "m_stack_space"
 #define STACK_SIZE 10000
 #define FUNC_LABEL "m_function"
-#define FP_REG_NUM 30
 #define SP_REG_NUM 29
+#define FP_REG_NUM 30
+#define RA_REG_NUM 31
 #define PUSH_REG_MIN 2
 #define PUSH_REG_MAX 31
 #define WORDSIZE 4
