@@ -57,10 +57,11 @@ int calcSize_typedIdentList_list(slist* params) {
     while (params != NULL) {
         typedidentlist* til = params->data;
         TYPE* ty = til->type;
+        int pointerP = til->pointerP;
         int tysize = ty->ty_size;
         slist* names = til->names;
         while (names != NULL) {
-            size += tysize;
+            size += pointerP ? WORDSIZE : tysize;
             names = names->next;
         }
         params = params->next;
@@ -123,27 +124,37 @@ void declareFunc(char* name, slist* params, htslist* body, TYPE* t) {
     }
 }
 
-int funcArgListMatches_p(ID* function, slist* paramExprs) {
-// returns 0 if the parameters given don't match the function parameter types and length
+void funcArgList_checkAndAddPointerPs(ID* function, slist* paramExprs) {
+// checks the validity of an argument list and adds info on whether they should be pointers.
     slist* idlists = function->typedIdentLists;
     while (idlists != NULL) {
         typedidentlist* idlist = idlists->data;
         TYPE* t = idlist->type;
+        int pointerP = idlist->pointerP;
         slist* names = idlist->names;
         while (names != NULL) {
             if (paramExprs == NULL) {
-                return 0;
+                yyerror("Not enough arguments");
             }
             expr* e = paramExprs->data;
             if (e->type != t) {
-                return 0;
+                yyerror("Function arg type mismatch");
+            }
+            if (pointerP) {
+                if (e->kind != globalVar && e->kind != localVar) {
+                    // if it's supposed to be a pointer we need a global or local variable
+                    yyerror("Non-lvalue used where a pass-by-reference variable was needed");
+                }
+                e->pointer_p = 1;
             }
             paramExprs = paramExprs->next;
             names = names->next;
         }
         idlists = idlists->next;
     }
-    return paramExprs == NULL;
+    if (paramExprs != NULL) {
+        yyerror("too many arguments");
+    }
 }
 
 

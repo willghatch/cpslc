@@ -159,9 +159,7 @@ void stmt_eval_proc(statement* s) {
     slist* paramExprs = s->data.procdata.paramExprs;
     ID* proc = scopeLookup(name);
     TYPE* t = proc->id_type;
-    if(!funcArgListMatches_p(proc, paramExprs)) {
-        yyerror("Invalid argument list for function or procedure");
-    }
+    funcArgList_checkAndAddPointerPs(proc, paramExprs);
     int funcLabel = proc->id_label;
     m_func_call(funcLabel, paramExprs, t);
 }

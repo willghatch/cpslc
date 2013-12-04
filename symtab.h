@@ -81,6 +81,7 @@ struct id_info
 	expr* const_expr;
 	slist* typedIdentLists; // For func/proc params -- slist of typedidentlist
 	int param_size; // size of all variables in the formal params of a func/proc
+	int pointer_p; // for fparameters -- is it actually a pointer
  }; /* id_info */
 
 

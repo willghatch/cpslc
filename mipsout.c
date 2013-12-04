@@ -497,6 +497,7 @@ void m_store_word_local(int reg, int offset, int storeByteOnly, expr* offsetExpr
     freeReg(registerState, tempreg);
 }
 
+/*
 void m_read_expr_(ID* intvar, int charNotInt, expr* offsetExpr) {
     int reg;
     reg = getReg(registerState);
@@ -526,6 +527,25 @@ void m_read_expr(expr* e) {
     } else {
         yyerror("Read expression with a type other than integer or character");
     }
+}
+*/
+
+void m_read_expr(expr* e) {
+    if (!(e->kind == globalVar || e->kind == localVar)) {
+        yyerror("Read expression with a non-variable");
+    }
+    int reg = getReg(registerState);
+    if(e->type == int_type) {
+        m_read_intchar(reg, 0);
+    } else if (e->type == char_type) {
+        m_read_intchar(reg, 1);
+    } else {
+        yyerror("Read expression with a type other than integer or character");
+    }
+    m_assign_stmt(e, newRegExpr(reg, e->type));
+
+    freeReg(registerState, reg);
+    
 }
 
 
@@ -634,14 +654,26 @@ void m_assign_stmt(expr* lval, expr* rval) {
     }
     else if (lval->kind == localVar) {
         int offset = lval->edata.id->id_addr;
-        if (isWord_p(t) || isByte) {
-            m_store_word_local(reg, offset, isByte, offsetExpr);
+        if (lval->pointer_p || lval->edata.id->pointer_p) {
+        printf("pointer lval hit \n");
+            int ptrReg = getReg(registerState);
+            m_load_frame_word(ptrReg, offset, 0, 0, 0);
+            ptrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(ptrReg, int_type), offsetExpr));
+            if (isWord_p(t) || isByte) {
+                m_store_word(reg, ptrReg, 0, isByte);
+            } else {
+                m_copyMem(reg, ptrReg, t->ty_size);
+            }
         } else {
-            int addrReg = getReg(registerState);
-            m_load_constant(newNumExpr(offset), addrReg);
-            m_bin_op_to_r1("add", addrReg, FP_REG_NUM);
-            m_copyMem(reg, addrReg, t->ty_size);
-            freeReg(registerState, addrReg);
+            if (isWord_p(t) || isByte) {
+                m_store_word_local(reg, offset, isByte, offsetExpr);
+            } else {
+                int addrReg = getReg(registerState);
+                m_load_constant(newBinOpExpr(op_add, newNumExpr(offset), offsetExpr), addrReg);
+                m_bin_op_to_r1("add", addrReg, FP_REG_NUM);
+                m_copyMem(reg, addrReg, t->ty_size);
+                freeReg(registerState, addrReg);
+            }
         }
     } 
     if (funcRetP && !isWord_p(t) && !isByte) {
@@ -863,17 +895,23 @@ void m_push_parameter_exprs(slist* paramExprs) {
     while (paramExprs != NULL) {
         expr* e = paramExprs->data;
         TYPE* t = e->type;
-        int reg = evalExpr(e);
-        if (isWord_p(t)) {
+        int reg;
+        if (e->pointer_p) {
+            reg = evalExprToPointer(e);
             m_push_word_from_reg(reg, 0);
-        } else if (isByte_p(t)) {
-            m_push_word_from_reg(reg, 1);
         } else {
-            // If it's a return value then it's already in the right place
-            // otherwise I need to push it...
-            if (e->kind != functionCall) {
-                m_copyMem(reg, SP_REG_NUM, t->ty_size);
-                m_move_stack_ptr(t->ty_size);
+            reg = evalExpr(e);
+            if (isWord_p(t)) {
+                m_push_word_from_reg(reg, 0);
+            } else if (isByte_p(t)) {
+                m_push_word_from_reg(reg, 1);
+            } else {
+                // If it's a return value then it's already in the right place
+                // otherwise I need to push it...
+                if (e->kind != functionCall) {
+                    m_copyMem(reg, SP_REG_NUM, t->ty_size);
+                    m_move_stack_ptr(t->ty_size);
+                }
             }
         }
         freeReg(registerState, reg);

@@ -177,7 +177,11 @@ void addIdToTable_noAddrMove(ID* newId, ID** table) {
 
 void addVarToCurTable(ID* var) {
     var->id_addr = scopeAddr[currscope];
-    scopeAddr[currscope] += var->id_type->ty_size;
+    if(var->pointer_p) {
+        scopeAddr[currscope] += WORDSIZE;
+    } else {
+        scopeAddr[currscope] += var->id_type->ty_size;
+    }
     addIdToTable_noAddrMove(var, scope+currscope);
 }
 
@@ -185,8 +189,12 @@ int getSizeOfScopeVars(ID* scope) {
     int size = 0;
     if (scope != NULL) {
         if(scope->id_kind = Variable) {
-            TYPE* t = scope->id_type;
-            size += t->ty_size;
+            if(scope->pointer_p) {
+                size += WORDSIZE;
+            } else {
+                TYPE* t = scope->id_type;
+                size += t->ty_size;
+            }
         }
         size += getSizeOfScopeVars(scope->id_left);
         size += getSizeOfScopeVars(scope->id_right);

@@ -18,11 +18,11 @@ int yylex(void);
 #include"function.h"
 
 int yyerror(const char *msg);
-void addVarsOfType(slist* idents, TYPE* type);
+void addVarsOfType(slist* idents, TYPE* type, int pointerP);
 void pushScope();
 void popScope();
-slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t);
-slist* retTypedIdentLists(slist* idents, TYPE* t);
+slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t, int pointerP);
+slist* retTypedIdentLists(slist* idents, TYPE* t, int pointerP);
 }
 
 %union{
@@ -134,6 +134,7 @@ slist* retTypedIdentLists(slist* idents, TYPE* t);
 %type <htslist_ptr> forwardOrBody
 %type <htslist_ptr> block
 %type <list_ptr> dotIdentOrExpStar
+%type <int_val> varMaybe
 
 %nonassoc EMPTY /* to give lowest precedence to empty rules */
 %left PIPESYM
@@ -221,7 +222,7 @@ forwardOrBody:
 formalParameters:
     /* Add vars to scope, and return list of typedidentlists */
     varMaybe identList COLONSYM type formalParameterExt {
-        slist* ls = addVars_and_retTypedIdentLists($2, $4);
+        slist* ls = addVars_and_retTypedIdentLists($2, $4, $1);
         slist_concat(ls, $5);
         $$ = ls;
     }
@@ -232,7 +233,7 @@ formalParameters:
 formalParameterExt:
     /* Add vars to scope, and return list of typedidentlists */
     SEMICOLONSYM varMaybe identList COLONSYM type formalParameterExt {
-        slist* ls = addVars_and_retTypedIdentLists($3, $5);
+        slist* ls = addVars_and_retTypedIdentLists($3, $5, $2);
         slist_concat(ls, $6);
         $$ = ls;
     }
@@ -242,7 +243,9 @@ formalParameterExt:
     ;
 varMaybe:
     VARSYM
+        {$$ = 1;}
     | /* empty */ %prec EMPTY
+        {$$ = 0;}
     ;
 body:
     constantDeclMaybe typeDeclMaybe varDeclMaybe block {
@@ -741,11 +744,12 @@ int yyerror(const char *msg)
 }
 
 
-void addVarsOfType(slist* idents, TYPE* type) {
+void addVarsOfType(slist* idents, TYPE* type, int pointerP) {
     while(idents) {
         char* name = idents->data;
         ID* id = newid(name);
         id->id_type = type;
+        id->pointer_p = pointerP;
         addVarToCurTable(id);
         
         idents = idents->next;
@@ -766,14 +770,15 @@ void popScope() {
     --currscope;
 }
 
-slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t) {
-        addVarsOfType(idents, t);
-        return retTypedIdentLists(idents, t);
+slist* addVars_and_retTypedIdentLists(slist* idents, TYPE* t, int pointerP) {
+        addVarsOfType(idents, t, pointerP);
+        return retTypedIdentLists(idents, t, pointerP);
 }
 
-slist* retTypedIdentLists(slist* idents, TYPE* t) {
+slist* retTypedIdentLists(slist* idents, TYPE* t, int pointerP) {
         typedidentlist* til = malloc(sizeof(typedidentlist));
         til->type = t;
+        til->pointerP = pointerP;
         til->names = idents;
         slist* ls = mkSlist(til);
         return ls;

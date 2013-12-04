@@ -9,6 +9,7 @@
 typedef struct typedidentlist_struct typedidentlist;
 struct typedidentlist_struct {
     TYPE* type;
+    int pointerP;
     slist* names;
 };
 

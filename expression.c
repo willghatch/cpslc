@@ -13,6 +13,7 @@ expr* newNumExpr(int val) {
     e->type = int_type;
     e->kind = constant_expr;
     e->int_val = val;
+    e->pointer_p = 0;
     return e;
 }
 
@@ -22,6 +23,7 @@ expr* newCharExpr(char val) {
     e->type = char_type;
     e->kind = constant_expr;
     e->char_val = val;
+    e->pointer_p = 0;
     return e;
 }
 
@@ -32,6 +34,7 @@ expr* newStrExpr(char* val) {
     e->kind = constant_expr;
     e->str_val = val;
     e->str_const_index = strConstIndex;
+    e->pointer_p = 0;
     m_add_string_constant(val);
     return e;
 }
@@ -42,6 +45,7 @@ expr* newBoolExpr(int val) {
     e->type = bool_type;
     e->kind = constant_expr;
     e->bool_val = val;
+    e->pointer_p = 0;
     return e;
 }
 
@@ -51,6 +55,7 @@ expr* newRegExpr(int reg, TYPE* type) {
     e->type = type;
     e->kind = registerVal;
     e->edata.reg_number = reg;
+    e->pointer_p = 0;
     return e;
 }
 
@@ -60,6 +65,7 @@ expr* newVariableExpr(ID* id, int isGlobal) {
     e->type = id->id_type;
     e->kind = isGlobal ? globalVar : localVar;
     e->edata.id = id;
+    e->pointer_p = 0;
     return e;
 }
 expr* newGlobalVExpr(ID* id) {
@@ -77,6 +83,7 @@ expr* newBinOpExpr(openum op, expr* e1, expr* e2) {
     e->edata.opdata.op = op;
     e->edata.opdata.operand1 = e1;
     e->edata.opdata.operand2 = e2;
+    e->pointer_p = 0;
     switch(op) {
         case op_and: 
         case op_or:
@@ -121,6 +128,7 @@ expr* newFuncCallExpr(statement* procstmt) {
     e->type = id->id_type;
     e->kind = functionCall;
     e->edata.funcCall = procstmt;
+    e->pointer_p = 0;
     return e;
 }
 
@@ -132,7 +140,26 @@ expr* newCastExpr(TYPE* newtype, expr* toCast) {
     e->type = newtype;
     e->kind = typecast;
     e->edata.innerExpr = toCast;
+    e->pointer_p = 0;
     return e;
+}
+
+int evalExprToPointer(expr* e) {
+    // returns a the number of a register that will contain the address of the
+    // lvalue expression.
+    // Only for use on pointer expressions
+
+        int reg = getReg(registerState);
+        expr* offsetExpr = e->offsetExpr;
+        int globalP = e->kind == globalVar;
+        if (globalP) {
+            m_load_global_address(e->edata.id->id_label, reg);
+        } else {
+            m_copy_fp(reg);
+            reg = evalExpr(newBinOpExpr(op_add, newRegExpr(reg, int_type), newNumExpr(e->edata.id->id_addr)));
+        }
+        reg = evalExpr(newBinOpExpr(op_add, newRegExpr(reg, int_type), offsetExpr));
+        return reg;
 }
 
 int evalExpr(expr* e) {
@@ -159,12 +186,11 @@ int evalExpr(expr* e) {
             break;
         case globalVar:
             reg = getReg(registerState);
-            offsetReg = evalExpr(e->offsetExpr);
             int addrReg = getReg(registerState);
             int globalIndex = e->edata.id->id_label;
             m_load_global_address(globalIndex, addrReg);
             // TODO - do I care that this blatantly leaks memory?  Probably not.
-            addrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(offsetReg, int_type), newRegExpr(addrReg, int_type)));
+            addrReg = evalExpr(newBinOpExpr(op_add, e->offsetExpr, newRegExpr(addrReg, int_type)));
             if(isWord_p(t) || isByte_p(t)) {
                 m_load_word_from_addr(reg, addrReg, 0, isByte_p(t));
             } else { 
@@ -172,26 +198,29 @@ int evalExpr(expr* e) {
             }
             // TODO - handle more types
             freeReg(registerState, addrReg); 
-            freeReg(registerState, offsetReg);
             break;
         case localVar:
             reg = getReg(registerState);
             int staticOffset = e->edata.id->id_addr;
             
-            offsetReg = evalExpr(e->offsetExpr);
-            addrReg = getReg(registerState);
-            m_copy_fp(addrReg);
-            // TODO - do I care that this blatantly leaks memory?  Probably not.
-            addrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(offsetReg, int_type), newRegExpr(addrReg, int_type)));
-            if(isWord_p(t)) {
-                m_load_frame_word(reg, staticOffset, 0, 0, addrReg);
-            } else if (isByte_p(t)) {
-                m_load_frame_word(reg, staticOffset, 1, 0, addrReg);
+            if(e->pointer_p) {
+                m_load_frame_word(reg, staticOffset, 0, 0, 0);
+                reg = evalExpr(newBinOpExpr(op_add, newRegExpr(reg, int_type), e->offsetExpr));
+                if(isWord_p(t) || isByte_p(t)) {
+                    m_load_frame_word(reg, staticOffset, isByte_p(t), 0, reg);
+                }
             } else {
-                m_copy_reg(reg, addrReg);
+                addrReg = getReg(registerState);
+                m_copy_fp(addrReg);
+                // TODO - do I care that this blatantly leaks memory?  Probably not.
+                addrReg = evalExpr(newBinOpExpr(op_add, e->offsetExpr, newRegExpr(addrReg, int_type)));
+                if(isWord_p(t) || isByte_p(t)) {
+                    m_load_frame_word(reg, staticOffset, isByte_p(t), 0, addrReg);
+                } else {
+                    m_copy_reg(reg, addrReg);
+                }
+                freeReg(registerState, addrReg); 
             }
-            freeReg(registerState, addrReg); 
-            freeReg(registerState, offsetReg);
             break;
         case functionCall:
             stmt_eval(e->edata.funcCall);

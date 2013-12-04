@@ -33,6 +33,7 @@ struct expression_struct {
     // they're not constant I'll have to have part of the parse tree or something...
     int str_const_index; // index in the list of string constants
     expr* offsetExpr;
+    int pointer_p;
     union {
         // TODO - move these values into the union.
         //int int_val;
@@ -66,6 +67,7 @@ expr* newLocalVExpr(ID* id);
 expr* newFuncCallExpr(statement* procstmt);
 expr* newCastExpr(TYPE* newtype, expr* toCast);
 int evalExpr(expr* e);
+int evalExprToPointer(expr* e);
 int doBinaryOperator(enum operator_enum op, expr* operand1, expr* operand2);
 int doUnaryOperator(enum operator_enum op, expr* operand1);
 
