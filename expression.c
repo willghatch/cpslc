@@ -196,14 +196,13 @@ int evalExpr(expr* e) {
             } else { 
                 m_copy_reg(reg, addrReg);
             }
-            // TODO - handle more types
             freeReg(registerState, addrReg); 
             break;
         case localVar:
             reg = getReg(registerState);
             int staticOffset = e->edata.id->id_addr;
             
-            if(e->pointer_p) {
+            if(e->pointer_p || e->edata.id->pointer_p) {
                 m_load_frame_word(reg, staticOffset, 0, 0, 0);
                 reg = evalExpr(newBinOpExpr(op_add, newRegExpr(reg, int_type), e->offsetExpr));
                 if(isWord_p(t) || isByte_p(t)) {
