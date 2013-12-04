@@ -497,39 +497,6 @@ void m_store_word_local(int reg, int offset, int storeByteOnly, expr* offsetExpr
     freeReg(registerState, tempreg);
 }
 
-/*
-void m_read_expr_(ID* intvar, int charNotInt, expr* offsetExpr) {
-    int reg;
-    reg = getReg(registerState);
-    if(charNotInt) {
-        m_read_intchar(reg, 1);
-    } else {
-        m_read_intchar(reg, 0);
-    }
-    int addrReg = getReg(registerState);
-    if (isGlobal(intvar)) {
-        m_store_word_global(reg, intvar->id_label, 0, charNotInt && isByte_p(char_type), offsetExpr);
-    } else {
-        m_store_word_local(reg, intvar->id_addr, charNotInt && isByte_p(char_type), offsetExpr);
-    }
-    freeReg(registerState, reg);
-}
-
-void m_read_expr(expr* e) {
-    if (!(e->kind == globalVar || e->kind == localVar)) {
-        yyerror("Read expression with a non-variable");
-    }
-    ID* varId = e->edata.id;
-    if(e->type == int_type) {
-        m_read_expr_(varId, 0, e->offsetExpr);
-    } else if (e->type == char_type) {
-        m_read_expr_(varId, 1, e->offsetExpr);
-    } else {
-        yyerror("Read expression with a type other than integer or character");
-    }
-}
-*/
-
 void m_read_expr(expr* e) {
     if (!(e->kind == globalVar || e->kind == localVar)) {
         yyerror("Read expression with a non-variable");
@@ -664,6 +631,7 @@ void m_assign_stmt(expr* lval, expr* rval) {
             } else {
                 m_copyMem(reg, ptrReg, t->ty_size);
             }
+            freeReg(registerState, ptrReg);
         } else {
             if (isWord_p(t) || isByte) {
                 m_store_word_local(reg, offset, isByte, offsetExpr);
