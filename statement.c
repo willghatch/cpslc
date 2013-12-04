@@ -99,6 +99,9 @@ statement* mkProcedureStmt(char* name, slist* paramExprs) {
     s->type = proc_stmt;
     s->data.procdata.name = name;
     s->data.procdata.paramExprs = paramExprs;
+    if(scopeLookup(name) == NULL) {
+        yyerror("Unknown function/procedure name");
+    }
     return s;
 }
 
@@ -158,6 +161,9 @@ void stmt_eval_proc(statement* s) {
     char* name = s->data.procdata.name;
     slist* paramExprs = s->data.procdata.paramExprs;
     ID* proc = scopeLookup(name);
+    if (proc == NULL) {
+        yyerror("Unknown function or procedure name");
+    }
     TYPE* t = proc->id_type;
     funcArgList_checkAndAddPointerPs(proc, paramExprs);
     int funcLabel = proc->id_label;

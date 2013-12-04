@@ -864,8 +864,15 @@ void m_push_parameter_exprs(slist* paramExprs) {
         expr* e = paramExprs->data;
         TYPE* t = e->type;
         int reg;
-        if (e->pointer_p) {
-            reg = evalExprToPointer(e);
+        if (e->to_pointer_p) {
+            if (!e->pointer_p) {
+                reg = evalExprToPointer(e);
+                printf("evaluating to pointer -----------------------------\n");
+            } else {
+                // Update pointer
+                reg = evalExpr_pointerUpdate(e);
+                printf("updating pointer ----------------------------------\n:");
+            }
             m_push_word_from_reg(reg, 0);
         } else {
             reg = evalExpr(e);

@@ -33,7 +33,8 @@ struct expression_struct {
     // they're not constant I'll have to have part of the parse tree or something...
     int str_const_index; // index in the list of string constants
     expr* offsetExpr;
-    int pointer_p;
+    int pointer_p; // true if the current expression is a pointer
+    int to_pointer_p; // true if the current expression will be turned into a pointer for a func call
     union {
         // TODO - move these values into the union.
         //int int_val;
@@ -68,6 +69,7 @@ expr* newFuncCallExpr(statement* procstmt);
 expr* newCastExpr(TYPE* newtype, expr* toCast);
 int evalExpr(expr* e);
 int evalExprToPointer(expr* e);
+int evalExpr_pointerUpdate(expr* e);
 int doBinaryOperator(enum operator_enum op, expr* operand1, expr* operand2);
 int doUnaryOperator(enum operator_enum op, expr* operand1);
 

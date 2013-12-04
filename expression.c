@@ -65,7 +65,8 @@ expr* newVariableExpr(ID* id, int isGlobal) {
     e->type = id->id_type;
     e->kind = isGlobal ? globalVar : localVar;
     e->edata.id = id;
-    e->pointer_p = 0;
+    e->pointer_p = id->pointer_p;
+    e->to_pointer_p = 0;
     return e;
 }
 expr* newGlobalVExpr(ID* id) {
@@ -160,6 +161,18 @@ int evalExprToPointer(expr* e) {
         }
         reg = evalExpr(newBinOpExpr(op_add, newRegExpr(reg, int_type), offsetExpr));
         return reg;
+}
+
+int evalExpr_pointerUpdate(expr* e) {
+    // returns a number of a register that will contain the address of an lvalue
+    // takes a pointer to an lvalue with an optional dynamic offset.
+    // This is for passing by reference variables already passed by reference
+printf("doing pointer update\n");
+    int ptrReg = getReg(registerState);
+    int staticOffset = e->edata.id->id_addr;
+    m_load_frame_word(ptrReg, staticOffset, 0, 0, 0);
+    ptrReg = doBinaryOperator(op_add, newRegExpr(ptrReg, int_type), e->offsetExpr);
+    return ptrReg;
 }
 
 int evalExpr(expr* e) {

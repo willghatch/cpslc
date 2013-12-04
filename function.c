@@ -145,7 +145,7 @@ void funcArgList_checkAndAddPointerPs(ID* function, slist* paramExprs) {
                     // if it's supposed to be a pointer we need a global or local variable
                     yyerror("Non-lvalue used where a pass-by-reference variable was needed");
                 }
-                e->pointer_p = 1;
+                e->to_pointer_p = 1;
             }
             paramExprs = paramExprs->next;
             names = names->next;
