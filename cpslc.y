@@ -197,6 +197,7 @@ procedureDecl:
         char* name = $2;
         slist* params = $5;
         htslist* bod = $8;
+    printf("declaring function: %s\n", $2);
         declareFunc(name, params, bod, NULL);
         // remember to pop the scope!
         popScope();

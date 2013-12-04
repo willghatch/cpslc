@@ -53,6 +53,7 @@ ID* mkBoolId(char* name, expr* expression) {
     boolid->id_kind = Constant_id;
     boolid->id_type = bool_type;
     boolid->const_expr = expression;
+    boolid->pointer_p = 0;
     return boolid;
 }
 
@@ -128,6 +129,7 @@ ID *newid (char *name)
 	new_id->id_next = NULL;
 	//new_id->id_value = 0;
 	new_id->const_expr = NULL;
+	new_id->pointer_p = 0;
 	return(new_id);
 } /* newid */
 
