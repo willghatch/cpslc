@@ -637,7 +637,8 @@ void m_assign_stmt(expr* lval, expr* rval) {
                 m_store_word_local(reg, offset, isByte, offsetExpr);
             } else {
                 int addrReg = getReg(registerState);
-                m_load_constant(newBinOpExpr(op_add, newNumExpr(offset), offsetExpr), addrReg);
+                addrReg = evalExpr(newBinOpExpr(op_add, newNumExpr(offset), offsetExpr));
+
                 m_bin_op_to_r1("add", addrReg, FP_REG_NUM);
                 m_copyMem(reg, addrReg, t->ty_size);
                 freeReg(registerState, addrReg);
