@@ -147,8 +147,10 @@ slist* retTypedIdentLists(slist* idents, TYPE* t);
 
 %%
 program:
-    constantDeclMaybe typeDeclMaybe varDeclMaybe {reserveGlobals();} procOrFuncDeclStar {m_add_main_label();} block endPeriod {
-        eval_stmt_list($7);
+    constantDeclMaybe typeDeclMaybe varDeclMaybe {reserveGlobals();} procOrFuncDeclStar {m_switch_to_main(); m_add_main_label();} block endPeriod {
+        htslist* stmts = $7;
+        hts_append(stmts, mkStopStmt());
+        eval_stmt_list(stmts);
     }
     ;
 endPeriod:
@@ -616,7 +618,7 @@ expression:
     | CHARACTERSYM
         {$$ = newCharExpr(yylval.char_val);}
     | STRINGSYM
-        {$$ = newStrExpr(yylval.str_val);}
+        {printf("string found: %s\n", yylval.str_val); $$ = newStrExpr(yylval.str_val);}
     ;
 unaryOp:
     TILDESYM

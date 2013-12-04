@@ -13,15 +13,18 @@
 // These are all slists of strings
 htslist* m_data;
 htslist* m_text;
+htslist* m_text_main;
 
 int strConstIndex = 0;
 int branchLabelIndex = 0;
 int globalVarIndex = 0;
-int ALLREG_PUSH_SIZE = PUSH_REG_MAX - PUSH_REG_MIN + 1;
+int ALLREG_PUSH_SIZE = PUSH_REG_MAX - PUSH_REG_MIN + 1 + /*plus fp and ra*/ 2;
+int inMain = 0; // Hack to put main function first for MARS... spim didn't need that...
 
 void mips_init() {
     m_data = mkHtslist();
     m_text = mkHtslist();
+    m_text_main = mkHtslist();
 }
 
 
@@ -30,15 +33,15 @@ void m_add_data(char* str) {
 }
 
 void m_add_text(char* str) {
-    hts_append(m_text, str);
+    if(inMain) {
+        hts_append(m_text_main, str);
+    } else {
+        hts_append(m_text, str);
+    }
 }
 
-slist* m_get_data() {
-    return m_data->head;
-}
-
-slist* m_get_text() {
-    return m_text->head;
+void m_switch_to_main() {
+    inMain = 1;
 }
 
 int upper16(int n) {
@@ -368,6 +371,11 @@ void m_write_file(char* file) {
     fprintf(f, "\n.text\n");
     
     // Print the text list
+    ls = m_text_main->head;
+    while(ls != NULL) {
+        fprintf(f, ls->data);
+        ls = ls->next;
+    }
     ls = m_text->head;
     while(ls != NULL) {
         fprintf(f, ls->data);
@@ -820,6 +828,8 @@ void m_push_all_regs() {
     o = malloc(OPERATOR_STRLEN*sizeof(char));
     snprintf(o, OPERATOR_STRLEN, "# Pushing all regs\n");
     m_add_text(o);
+    m_push_reg(FP_REG_NUM);
+    m_push_reg(RA_REG_NUM);
     for(int i = PUSH_REG_MIN; i <= PUSH_REG_MAX; ++i) {
         m_push_reg(i);
     }
@@ -833,6 +843,8 @@ void m_pop_all_regs() {
     for(int i = PUSH_REG_MAX; i >= PUSH_REG_MIN; --i) {
         m_pop_reg(i);
     }
+    m_pop_reg(RA_REG_NUM);
+    m_pop_reg(FP_REG_NUM);
 }
 
 void m_push_word_from_reg(int reg, int justByte) {
@@ -859,7 +871,7 @@ void m_push_parameter_exprs(slist* paramExprs) {
         } else {
             // If it's a return value then it's already in the right place
             // otherwise I need to push it...
-            if (!e->kind == functionCall) {
+            if (e->kind != functionCall) {
                 m_copyMem(reg, SP_REG_NUM, t->ty_size);
                 m_move_stack_ptr(t->ty_size);
             }

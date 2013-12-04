@@ -26,7 +26,7 @@
 #define FP_REG_NUM 30
 #define RA_REG_NUM 31
 #define PUSH_REG_MIN 2
-#define PUSH_REG_MAX 31
+#define PUSH_REG_MAX 27
 #define WORDSIZE 4
 
 #define SYSC_PRINT_INT 1
@@ -94,6 +94,7 @@ void m_copy_fp(int destReg);
 void m_load_word_from_addr(int destReg, int addrReg, int staticOffset, int byteOnlyP);
 void m_copy_reg(int dstReg, int srcReg);
 void m_copyMem(int srcAddrReg, int dstAddrReg, int size);
+void m_switch_to_main();
 
 extern int branchLabelIndex;
 extern int strConstIndex;
