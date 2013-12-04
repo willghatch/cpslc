@@ -219,7 +219,7 @@ int evalExpr(expr* e) {
                 m_load_frame_word(reg, staticOffset, 0, 0, 0);
                 reg = evalExpr(newBinOpExpr(op_add, newRegExpr(reg, int_type), e->offsetExpr));
                 if(isWord_p(t) || isByte_p(t)) {
-                    m_load_frame_word(reg, staticOffset, isByte_p(t), 0, reg);
+                    m_load_frame_word(reg, 0, isByte_p(t), 0, reg);
                 }
             } else {
                 addrReg = getReg(registerState);
@@ -229,6 +229,7 @@ int evalExpr(expr* e) {
                 if(isWord_p(t) || isByte_p(t)) {
                     m_load_frame_word(reg, staticOffset, isByte_p(t), 0, addrReg);
                 } else {
+                    addrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(addrReg, int_type), newNumExpr(staticOffset)));
                     m_copy_reg(reg, addrReg);
                 }
                 freeReg(registerState, addrReg); 
