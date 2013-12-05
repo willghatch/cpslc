@@ -622,7 +622,6 @@ void m_assign_stmt(expr* lval, expr* rval) {
     else if (lval->kind == localVar) {
         int offset = lval->edata.id->id_addr;
         if (lval->pointer_p || lval->edata.id->pointer_p) {
-        printf("pointer lval hit \n");
             int ptrReg = getReg(registerState);
             m_load_frame_word(ptrReg, offset, 0, 0, 0);
             ptrReg = evalExpr(newBinOpExpr(op_add, newRegExpr(ptrReg, int_type), offsetExpr));
@@ -868,11 +867,9 @@ void m_push_parameter_exprs(slist* paramExprs) {
         if (e->to_pointer_p) {
             if (!e->pointer_p) {
                 reg = evalExprToPointer(e);
-                printf("evaluating to pointer -----------------------------\n");
             } else {
                 // Update pointer
                 reg = evalExpr_pointerUpdate(e);
-                printf("updating pointer ----------------------------------\n:");
             }
             m_push_word_from_reg(reg, 0);
         } else {
