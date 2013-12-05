@@ -16,5 +16,42 @@ value if they're an identifier or constant (int, string, or char).  It takes the
 it reads from stdin.
 
 
-Umm... to build, run make.  Have fun.
+Just run "make" to build, and there should be no problems as long as you have:
+bison
+flex
+c/unix standard libraries
+
+
+Some comments:
+Since I'm not sure what libraries the grader will have installed, and to not have
+him install any more, I rolled some of my own stuff (linked list, etc) that I would
+otherwise have used a library for.  I wanted to use pure C instead of C++ to get
+some more experience with just C.
+
+The style of the code is pretty bad -- I mixed a hodgepodge of styles, as I was
+kinda trying to find what style I liked for straight C.  Some of the code in
+symtab.c and symtab.h I took from the class slides on the symbol table stuff.
+I'm not really sure why I re-used class code for that and nothing else... but that's
+what happened.
+
+It was fun and fulfilling to make.  I'm really glad I took this class and wrote this
+compiler.
+
+I'll probably put this on github, because hey, I built a compiler.  If random people
+from the internet inspect this code remember:  It was a school project.  Corners were
+cut.  Documentation was ignored.  It's mostly awful.  But it works... so... pedagogical
+goal completed I suppose.
+
+
+
+
+KNOWN ISSUES:
+
+If you have a long expression of the right type, you might run out of registers.
+There is no register spilling code.  But you should be safe unless you have something
+like a + (b + (c + (d + (e + f)))).  And it would have to be longer.  So I've never
+actually run into the problem.
+
+Error messages are pretty bad.  Oh well.
+
 
