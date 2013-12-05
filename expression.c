@@ -167,7 +167,6 @@ int evalExpr_pointerUpdate(expr* e) {
     // returns a number of a register that will contain the address of an lvalue
     // takes a pointer to an lvalue with an optional dynamic offset.
     // This is for passing by reference variables already passed by reference
-printf("doing pointer update\n");
     int ptrReg = getReg(registerState);
     int staticOffset = e->edata.id->id_addr;
     m_load_frame_word(ptrReg, staticOffset, 0, 0, 0);

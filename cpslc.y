@@ -197,7 +197,6 @@ procedureDecl:
         char* name = $2;
         slist* params = $5;
         htslist* bod = $8;
-    printf("declaring function: %s\n", $2);
         declareFunc(name, params, bod, NULL);
         // remember to pop the scope!
         popScope();
@@ -622,7 +621,7 @@ expression:
     | CHARACTERSYM
         {$$ = newCharExpr(yylval.char_val);}
     | STRINGSYM
-        {printf("string found: %s\n", yylval.str_val); $$ = newStrExpr(yylval.str_val);}
+        {$$ = newStrExpr(yylval.str_val);}
     ;
 unaryOp:
     TILDESYM
