@@ -4,11 +4,11 @@ By William Hatch
 An exciting class project for CS5300 at Utah State University.
 
 The executable "cpslc" is the compiler.
-It reads from the file specified in the first command line parameter, or stdin.
-It outputs to the file "output.asm" because it's late and I don't want to add more arg parsing now
+It prints a lovely help message if run with -h, --help, or an unknown argument.
+Syntax is:
+cpslc [-hv] [-f infile] [-o outfile]
+where the flags can be replaced by --help, --verbose, --file, and --output respectively.
 It currently has shift/reduce errors on two rules, but I want them to shift, so it's good.
-
-It has a verbose option that can be enabled by adding --verbose, which prints the symbol table
 
 
 The executable "lextest" is just a lexical analyzer.  It prints int values for the symbols found, and their yylval

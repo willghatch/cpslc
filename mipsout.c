@@ -346,7 +346,12 @@ void m_add_function_label(int FLabelNum) {
 }
 
 void m_write_file(char* file) {
-    FILE* f = fopen(file, "w");
+    FILE* f;
+    if (!strcmp(file, "-")) {
+        f = stdout;
+    } else {
+        f = fopen(file, "w");
+    }
     fprintf(f, "\n#File written by the (not so) amazing cpslc written by William Hatch\n");
 
     // write data section

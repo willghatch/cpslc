@@ -739,7 +739,7 @@ int yyerror(const char *msg)
     extern int yylineno; /* from flex */
     extern char *yytext; /* from flex */
 
-    printf("ERROR: %s -- at symbol \"%s\" on line %i.\n", msg, yytext, yylineno);
+    fprintf(stderr, "ERROR: %s -- at symbol \"%s\" on line %i.\n", msg, yytext, yylineno);
     exit(1);
 }
 
