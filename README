@@ -2,13 +2,13 @@ cpslc -- the Compilers Project Source Language Compiler
 By William Hatch (willghatch@gmail.com)
 
 An exciting class project for CS5300 at Utah State University.
+Compiles CPSL to mips assembly suitable for running on spim or MARS simulators.
 
 The executable "cpslc" is the compiler.
 It prints a lovely help message if run with -h, --help, or an unknown argument.
 Syntax is:
 cpslc [-hv] [-f infile] [-o outfile]
 where the flags can be replaced by --help, --verbose, --file, and --output respectively.
-It currently has shift/reduce errors on two rules, but I want them to shift, so it's good.
 
 
 The executable "lextest" is just a lexical analyzer.  It prints int values for the symbols found, and their yylval
