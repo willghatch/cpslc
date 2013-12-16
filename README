@@ -6,6 +6,9 @@ Compiles CPSL to mips assembly suitable for running on spim or MARS simulators.
 
 Built to comply with the specification document included as CPSL.pdf (also available
 in source from https://github.com/ksundberg/CS5300).
+The test files from the class are also included in the ClassTestFiles directory (copied
+in case future classes change the specifications of the compiler, etc).  They are also
+available from Dr. Sundberg's git repository given above.
 
 The executable "cpslc" is the compiler.
 It prints a lovely help message if run with -h, --help, or an unknown argument.
