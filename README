@@ -4,6 +4,9 @@ By William Hatch (willghatch@gmail.com)
 An exciting class project for CS5300 at Utah State University.
 Compiles CPSL to mips assembly suitable for running on spim or MARS simulators.
 
+Built to comply with the specification document included as CPSL.pdf (also available
+in source from https://github.com/ksundberg/CS5300).
+
 The executable "cpslc" is the compiler.
 It prints a lovely help message if run with -h, --help, or an unknown argument.
 Syntax is:
