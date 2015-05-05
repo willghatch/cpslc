@@ -1,7 +1,12 @@
-cpslc -- the Compilers Project Source Language Compiler
+cpslc 
+=====
+
+the Compilers Project Source Language Compiler
+
 By William Hatch (willghatch@gmail.com)
 
 An exciting class project for CS5300 at Utah State University.
+
 Compiles CPSL to mips assembly suitable for running on spim or MARS simulators.
 
 Built to comply with the specification document included as CPSL.pdf (also available
@@ -10,25 +15,26 @@ The test files from the class are also included in the ClassTestFiles directory 
 in case future classes change the specifications of the compiler, etc).  They are also
 available from Dr. Sundberg's git repository given above.
 
-The executable "cpslc" is the compiler.
+The executable `cpslc` is the compiler.
 It prints a lovely help message if run with -h, --help, or an unknown argument.
 Syntax is:
-cpslc [-hv] [-f infile] [-o outfile]
+`cpslc [-hv] [-f infile] [-o outfile]`
 where the flags can be replaced by --help, --verbose, --file, and --output respectively.
 
 
-The executable "lextest" is just a lexical analyzer.  It prints int values for the symbols found, and their yylval
+The executable `lextest` is just a lexical analyzer.  It prints int values for the symbols found, and their yylval
 value if they're an identifier or constant (int, string, or char).  It takes the name of a file or
 it reads from stdin.
 
 
-Just run "make" to build, and there should be no problems as long as you have:
-bison
-flex
-c/unix standard libraries
+Just run `make` to build, and there should be no problems as long as you have:
+- bison
+- flex
+- c/unix standard libraries
 
+Comments
+--------
 
-Some comments:
 Since I'm not sure what libraries the grader will have installed, and to not have
 him install any more, I rolled some of my own stuff (linked list, etc) that I would
 otherwise have used a library for.  I wanted to use pure C instead of C++ to get
@@ -48,10 +54,8 @@ from the internet inspect this code remember:  It was a school project.  Corners
 cut.  Documentation was ignored.  It's mostly awful.  But it works... so... pedagogical
 goal completed I suppose.
 
-
-
-
-KNOWN ISSUES:
+Known Issues
+------------
 
 If you have a long expression of the right type, you might run out of registers.
 There is no register spilling code.  But you should be safe unless you have something
